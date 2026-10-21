@@ -1,6 +1,6 @@
 # MF.cobroup-frontend-admin
 
-PWA administrativa de COBROUP. El acceso usa usuario y contraseña, abre la última organización utilizada y permite cambiar entre membresías activas. Conserva Authorization Code + PKCE, refresh rotatorio en memoria y logout con revocación. La fase 3 incluye configuración organizacional y gestión completa de rutas, cupos, supervisor, cobradores y estado dentro del tenant activo; aprobaciones y reportes pertenecen a fases posteriores.
+PWA administrativa de COBROUP. El acceso usa usuario y contraseña, abre la última organización utilizada y permite cambiar entre membresías activas. Conserva Authorization Code + PKCE, refresh rotatorio en memoria y logout con revocación. Fase 4 incorpora consulta global de clientes, detalle, traslado de ruta y cambio de estado mediante el backend operativo; aprobaciones financieras y reportes pertenecen a fases posteriores.
 
 ## Requisitos
 
