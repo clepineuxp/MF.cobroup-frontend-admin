@@ -20,6 +20,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/organization-settings/pages/organization-settings.page').then((module) => module.OrganizationSettingsPage),
     title: 'Configuración | COBROUP Administración',
   },
+  {
+    path: 'clientes',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/customers/pages/customers.page').then((module) => module.CustomersPage),
+    title: 'Clientes | COBROUP Administración',
+  },
   { path: 'login', loadComponent: () => import('./features/auth/pages/login.page').then((module) => module.LoginPage), title: 'Acceso administrativo | COBROUP' },
   { path: 'auth/callback', loadComponent: () => import('./features/auth/pages/auth-callback.page').then((module) => module.AuthCallbackPage), title: 'Validando acceso | COBROUP' },
   { path: '**', redirectTo: '' },

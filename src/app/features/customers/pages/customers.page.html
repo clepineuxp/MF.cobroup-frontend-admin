@@ -1,0 +1,20 @@
+<section aria-labelledby="customers-title">
+  <div class="heading"><div><p class="eyebrow">Control administrativo</p><h2 id="customers-title">Clientes</h2></div><span class="count">{{ totalCount() }}</span></div>
+  <p>Consulta clientes de toda la organización, cambia su ruta y administra su estado sin duplicar datos en el servicio administrativo.</p>
+
+  @if (selected(); as customer) {
+    <form class="detail" (ngSubmit)="saveAssignment()"><div class="heading"><div><h3>{{ customer.firstNames }} {{ customer.lastNames }}</h3><span>{{ customer.businessOrWorkName }}</span></div><button type="button" class="quiet" (click)="close()">Cerrar</button></div>
+      <div class="fields"><label>Ruta activa<select name="editRoute" [(ngModel)]="editRouteId" required>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label><label>Estado<select name="editStatus" [(ngModel)]="editStatus"><option value="Active">Activo</option><option value="Inactive">Inactivo</option></select></label></div>
+      <div class="contact"><div><strong>Teléfonos</strong>@for (phone of customer.phones; track phone.id) { <span>{{ phone.number }} {{ phone.isPrimary ? '· Principal' : '' }}</span> }</div><div><strong>Ubicaciones</strong>@for (location of customer.locations; track location.id) { <span>{{ location.alias || 'Sin alias' }} · {{ location.latitude }}, {{ location.longitude }} {{ location.isPrimary ? '· Principal' : '' }}</span> }</div></div>
+      @if (customer.observations) { <p>{{ customer.observations }}</p> }
+      <div class="actions"><button class="primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar asignación' }}</button></div>
+    </form>
+  }
+
+  <form class="filters" (ngSubmit)="search()"><label>Ruta<select name="route" [(ngModel)]="filterRouteId"><option value="">Todas</option>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label><label>Buscar<input name="search" [(ngModel)]="searchTerm" placeholder="Nombre, comercio o teléfono"></label><button class="primary" type="submit">Buscar</button></form>
+  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (loading()) { <p>Cargando clientes…</p> }
+  @else if (customers().length === 0) { <p class="empty">No existen clientes para los filtros actuales.</p> }
+  @else { <div class="grid">@for (customer of customers(); track customer.id) { <article><div class="heading"><div><h3>{{ customer.firstNames }} {{ customer.lastNames }}</h3><span>{{ routeName(customer.routeId) }}</span></div><span class="status" [class.inactive]="customer.status === 'Inactive'">{{ customer.status === 'Active' ? 'Activo' : 'Inactivo' }}</span></div><p>{{ customer.businessOrWorkName || 'Sin comercio o trabajo registrado' }}</p><dl><dt>Teléfono principal</dt><dd>{{ customer.primaryPhone }}</dd><dt>Ubicación</dt><dd>{{ customer.primaryLatitude }}, {{ customer.primaryLongitude }}</dd></dl><button type="button" class="quiet" (click)="inspect(customer.id)">Administrar</button></article> }</div> }
+</section>
