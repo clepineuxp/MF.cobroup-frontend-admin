@@ -1,6 +1,6 @@
 # MF.cobroup-frontend-admin
 
-PWA administrativa de COBROUP por organización. Fase 2 incorpora ingreso por organización y usuario, Authorization Code + PKCE, callback, refresh rotatorio en memoria y logout con revocación. No simula configuración, aprobaciones ni reportes.
+PWA administrativa de COBROUP. El acceso usa usuario y contraseña, abre la última organización utilizada y permite cambiar entre membresías activas. Conserva Authorization Code + PKCE, refresh rotatorio en memoria y logout con revocación. No simula configuración, aprobaciones ni reportes.
 
 ## Requisitos
 
@@ -10,9 +10,9 @@ PWA administrativa de COBROUP por organización. Fase 2 incorpora ingreso por or
 
 ```powershell
 npm ci
-npx ng serve --host=127.0.0.1 --port=4201
+npm start
 npm test -- --watch=false
 npm run build
 ```
 
-El build de producción habilita el service worker. En desarrollo, `proxy.conf.json` dirige `/identity` a la autoridad HTTPS. En despliegue, el gateway debe conservar esa ruta bajo el mismo origen. Los tokens no se guardan en `localStorage` ni `sessionStorage`; solo el estado y verifier PKCE de un uso sobreviven la redirección.
+`npm start` escucha en todas las interfaces mediante `0.0.0.0:5300`; el origen local para navegador y OIDC es `http://localhost:5300`. El build de producción habilita el service worker. En desarrollo, `proxy.conf.json` dirige `/identity` a la autoridad HTTPS. En despliegue, el gateway debe conservar esa ruta bajo el mismo origen. Los tokens no se guardan en `localStorage` ni `sessionStorage`; solo el estado y verifier PKCE de un uso sobreviven la redirección.

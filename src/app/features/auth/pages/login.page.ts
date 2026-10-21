@@ -7,16 +7,20 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly membershipRequired = signal(false);
   readonly form = new FormGroup({
-    organizationCode: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   async submit(): Promise<void> {
     if (this.form.invalid || this.busy()) return;
-    this.busy.set(true); this.error.set('');
-    try { await this.auth.login(this.form.getRawValue()); }
+    this.busy.set(true); this.error.set(''); this.membershipRequired.set(false);
+    try {
+      const outcome = await this.auth.login(this.form.getRawValue());
+      this.membershipRequired.set(outcome === 'membership_required');
+      if (outcome === 'membership_required') this.busy.set(false);
+    }
     catch (error) { this.error.set(error instanceof Error ? error.message : 'No fue posible iniciar sesión.'); this.busy.set(false); }
   }
 

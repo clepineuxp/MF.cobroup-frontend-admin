@@ -1,0 +1,11 @@
+@if (context(); as current) {
+  <div class="organization-switcher">
+    <label for="organization-admin">Organización</label>
+    <select id="organization-admin" [value]="current.organizationId" [disabled]="busy()" (change)="select($event)">
+      @for (organization of organizations(); track organization.organizationId) {
+        <option [value]="organization.organizationId">{{ organization.organizationName }} · {{ organization.role }}</option>
+      }
+    </select>
+    @if (error()) { <p role="alert">{{ error() }}</p> }
+  </div>
+}
