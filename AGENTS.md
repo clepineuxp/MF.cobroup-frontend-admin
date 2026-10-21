@@ -3,20 +3,20 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.0.7.
+- Maestro: `../cobroup.md/COBROUP.md` 1.0.8.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-4-clientes`.
+- Rama activa: `feature/fase-5-plantillas-excepciones`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 4; resultado: COMPLETADA.
+- Fase: 5; resultado: EN_CURSO.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 4 completas y 5 pendientes. Informe: `../cobroup.md/informe/avance.md`.
-- Corte actual: consulta, detalle, traslado y estado de clientes mediante fachada administrativa; build productivo y 10/10 pruebas.
+- Línea base: 9 fases totales; 4 completas, 1 en curso y 4 posteriores. Informe: `../cobroup.md/informe/avance.md`.
+- Corte actual: administración y versionado de plantillas; build productivo y 10/10 pruebas existentes.
 
 ## Historial cronológico (append-only)
 
@@ -91,3 +91,12 @@
 - Seguridad: no envía tenant y depende del bearer vigente; las acciones administrativas se vuelven a validar en BackendAdmin y Backend operativo.
 - Validación: build productivo exitoso y 10/10 pruebas.
 - Git: commit de fase 4 autorizado; push, merge, tag y PR permanecen prohibidos.
+
+### 2026-10-21 — Inicio de fase 5: administración de plantillas
+
+- Rama: `feature/fase-5-plantillas-excepciones`; fase 4 ya comprometida al iniciar.
+- Interfaz: nueva pantalla `/plantillas` para crear, editar, publicar, inactivar y consultar el historial de versiones con límites y porcentajes exactos.
+- Seguridad: usa bearer en memoria; no transmite tenant y depende de la validación Admin del servidor.
+- Validación: build productivo exitoso y 10/10 pruebas existentes.
+- Pendiente de fase: bandeja de solicitudes excepcionales y decisión administrativa.
+- Git: cambios de fase 5 sin commit; push, merge, tag y PR no autorizados.
