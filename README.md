@@ -1,6 +1,6 @@
 # MF.cobroup-frontend-admin
 
-PWA administrativa de COBROUP. El acceso usa usuario y contraseña, abre la última organización utilizada y permite cambiar entre membresías activas. Conserva Authorization Code + PKCE, refresh rotatorio en memoria y logout con revocación. No simula configuración, aprobaciones ni reportes.
+PWA administrativa de COBROUP. El acceso usa usuario y contraseña, abre la última organización utilizada y permite cambiar entre membresías activas. Conserva Authorization Code + PKCE, refresh rotatorio en memoria y logout con revocación. La fase 3 incluye configuración organizacional y gestión completa de rutas, cupos, supervisor, cobradores y estado dentro del tenant activo; aprobaciones y reportes pertenecen a fases posteriores.
 
 ## Requisitos
 
@@ -16,3 +16,5 @@ npm run build
 ```
 
 `npm start` escucha en todas las interfaces mediante `0.0.0.0:5300`; el origen local para navegador y OIDC es `http://localhost:5300`. El build de producción habilita el service worker. En desarrollo, `proxy.conf.json` dirige `/identity` a la autoridad HTTPS. En despliegue, el gateway debe conservar esa ruta bajo el mismo origen. Los tokens no se guardan en `localStorage` ni `sessionStorage`; solo el estado y verifier PKCE de un uso sobreviven la redirección.
+
+La pantalla `/configuracion` mantiene zona horaria, moneda y cupos generales. `/rutas` consume listado, alta y actualización, permite heredar/sobrescribir cupos y desactivar o reasignar rutas. Las llamadas reutilizan el access token en memoria y hacen un único refresh ante `401` antes de devolver el error.

@@ -1,0 +1,63 @@
+<section class="page-heading" aria-labelledby="routes-title">
+  <div><p class="eyebrow">Configuración operativa</p><h2 id="routes-title">Rutas de cobro</h2></div>
+  <p>Crea rutas dentro de la organización activa y asigna únicamente sus supervisores y cobradores.</p>
+</section>
+
+@if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+@if (success()) { <p class="message success" role="status">{{ success() }}</p> }
+
+<div class="workspace">
+  <section class="panel" aria-labelledby="new-route-title">
+    <div class="form-heading"><h3 id="new-route-title">{{ editingRouteId() ? 'Editar ruta' : 'Nueva ruta' }}</h3>@if (editingRouteId()) { <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button> }</div>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>Nombre <input formControlName="name" maxlength="120" autocomplete="off" /></label>
+      <label>Descripción <textarea formControlName="description" maxlength="500" rows="3"></textarea></label>
+      <label>Supervisor
+        <select formControlName="supervisorUserId">
+          <option value="">Selecciona un supervisor</option>
+          @for (user of supervisors(); track user.id) { <option [value]="user.id">{{ user.displayName }} · {{ user.username }}</option> }
+        </select>
+      </label>
+      @if (editingRouteId()) {
+        <label>Estado
+          <select formControlName="status"><option value="Active">Activa</option><option value="Inactive">Inactiva</option></select>
+        </label>
+      }
+      <fieldset>
+        <legend>Cobradores</legend>
+        @if (collectors().length === 0) { <p>No hay cobradores activos disponibles.</p> }
+        @for (user of collectors(); track user.id) {
+          <label class="check"><input type="checkbox" [checked]="selectedCollectorIds().has(user.id)" (change)="toggleCollector(user.id, $any($event.target).checked)" /> <span>{{ user.displayName }} <small>{{ user.username }}</small></span></label>
+        }
+      </fieldset>
+      <fieldset>
+        <legend>Cupos efectivos</legend>
+        <label>Clientes activos
+          <select formControlName="maxActiveCustomersMode"><option value="Inherited">Heredar de organización</option><option value="Overridden">Sobrescribir</option></select>
+        </label>
+        @if (form.controls.maxActiveCustomersMode.value === 'Overridden') { <label>Límite de clientes <input type="number" min="1" formControlName="maxActiveCustomersOverride" /></label> }
+        <label>Préstamos activos
+          <select formControlName="maxActiveLoansMode"><option value="Inherited">Heredar de organización</option><option value="Overridden">Sobrescribir</option></select>
+        </label>
+        @if (form.controls.maxActiveLoansMode.value === 'Overridden') { <label>Límite de préstamos <input type="number" min="1" formControlName="maxActiveLoansOverride" /></label> }
+      </fieldset>
+      <button type="submit" [disabled]="saving() || supervisors().length === 0 || collectors().length === 0">{{ saving() ? 'Guardando…' : editingRouteId() ? 'Guardar cambios' : 'Crear ruta' }}</button>
+    </form>
+  </section>
+
+  <section class="panel routes" aria-labelledby="route-list-title">
+    <div class="list-heading"><h3 id="route-list-title">Rutas configuradas</h3><span>{{ routes().length }}</span></div>
+    @if (loading()) { <p>Cargando rutas…</p> }
+    @else if (routes().length === 0) { <p class="empty">Aún no hay rutas en esta organización.</p> }
+    @for (route of routes(); track route.id) {
+      <article>
+        <div><h4>{{ route.name }}</h4><span class="status">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
+        @if (route.description) { <p>{{ route.description }}</p> }
+        <dl><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div></dl>
+        <dl><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
+        <p class="collectors">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> y {{ route.collectors.length - 1 }} más</span> }</p>
+        <button type="button" class="secondary edit" (click)="edit(route)">Editar configuración</button>
+      </article>
+    }
+  </section>
+</div>
