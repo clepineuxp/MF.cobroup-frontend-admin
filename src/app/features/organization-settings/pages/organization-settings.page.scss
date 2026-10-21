@@ -1,0 +1,14 @@
+section { max-width: 44rem; padding: clamp(var(--space-4), 4vw, var(--space-8)); border: 0.0625rem solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-raised); }
+.eyebrow { margin: 0; color: var(--color-text-muted); font-weight: 700; }
+h2 { margin-block: var(--space-2) var(--space-4); }
+p { line-height: 1.55; }
+form { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+label { display: grid; gap: var(--space-2); font-weight: 700; }
+input { width: 100%; padding: 0.75rem; color: var(--color-text); background: var(--color-background); border: 0.0625rem solid var(--color-border); border-radius: var(--radius-sm); font: inherit; }
+button { padding: 0.8rem 1rem; color: var(--color-on-primary); background: var(--color-primary); border: 0; border-radius: var(--radius-sm); font-weight: 800; cursor: pointer; }
+button:disabled { opacity: 0.55; }
+.notice { padding: var(--space-3); border-left: 0.25rem solid var(--color-warning); background: var(--color-background); }
+.message { padding: var(--space-3); border-radius: var(--radius-sm); }
+.error { color: var(--color-danger); border: 0.0625rem solid var(--color-danger); }
+.success { color: var(--color-success); }
+.hint { margin: 0; color: var(--color-text-muted); font-size: 0.9rem; }

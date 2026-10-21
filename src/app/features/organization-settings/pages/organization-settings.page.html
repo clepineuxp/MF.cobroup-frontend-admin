@@ -1,0 +1,19 @@
+<section aria-labelledby="settings-title">
+  <p class="eyebrow">Parámetros heredables</p>
+  <h2 id="settings-title">Configuración de la organización</h2>
+  <p>Estos valores determinan la zona horaria de negocio, la moneda y los cupos que heredan las rutas sin una sobrescritura propia.</p>
+  @if (loading()) { <p>Cargando configuración…</p> }
+  @else {
+    @if (!configured()) { <p class="notice">La organización aún no tiene configuración. Los cupos heredados permanecen sin límite hasta guardarla.</p> }
+    @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+    @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>Zona horaria IANA <input formControlName="timeZoneId" placeholder="America/Bogota" /></label>
+      <label>Moneda ISO <input formControlName="currencyCode" maxlength="3" placeholder="COP" /></label>
+      <label>Máximo de clientes activos por ruta <input type="number" min="1" formControlName="maxActiveCustomersPerRoute" placeholder="Sin límite" /></label>
+      <label>Máximo de préstamos activos por ruta <input type="number" min="1" formControlName="maxActiveLoansPerRoute" placeholder="Sin límite" /></label>
+      <p class="hint">Deja un cupo vacío para no establecer un límite general. Una ruta puede heredarlo o sobrescribirlo.</p>
+      <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar configuración' }}</button>
+    </form>
+  }
+</section>

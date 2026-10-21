@@ -8,6 +8,18 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin-overview/pages/admin-overview.page').then((module) => module.AdminOverviewPage),
     title: 'Administración | COBROUP',
   },
+  {
+    path: 'rutas',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/routes/pages/routes.page').then((module) => module.RoutesPage),
+    title: 'Rutas | COBROUP Administración',
+  },
+  {
+    path: 'configuracion',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/organization-settings/pages/organization-settings.page').then((module) => module.OrganizationSettingsPage),
+    title: 'Configuración | COBROUP Administración',
+  },
   { path: 'login', loadComponent: () => import('./features/auth/pages/login.page').then((module) => module.LoginPage), title: 'Acceso administrativo | COBROUP' },
   { path: 'auth/callback', loadComponent: () => import('./features/auth/pages/auth-callback.page').then((module) => module.AuthCallbackPage), title: 'Validando acceso | COBROUP' },
   { path: '**', redirectTo: '' },

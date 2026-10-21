@@ -3,18 +3,19 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.0.1.
+- Maestro: `../cobroup.md/COBROUP.md` 1.0.5.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-2-identidad-tenant`.
+- Rama activa: `feature/fase-3-configuracion-rutas`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 2; resultado: COMPLETADA.
+- Fase: 3; resultado: COMPLETADA.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
+- Línea base: 9 fases totales; 3 completas y 6 pendientes. Informe: `../cobroup.md/informe/avance.md`.
 
 ## Historial cronológico (append-only)
 
@@ -48,3 +49,37 @@
 - Validación: build exitoso y pruebas 4/4.
 - Integración: autoridad real inicializada con una organización y usuarios `Admin`, `Supervisor` y `Collector`; el flujo OIDC completo se validó por rol.
 - Git: commit de cierre de fase 2 autorizado por el usuario; sin push, merge, tag ni PR.
+
+### 2026-10-21 — Inicio de fase 3
+
+- Rama creada para configuración y rutas.
+- El backend administrativo inició el alta tenant-safe de rutas y asignaciones. La pantalla administrativa se implementará cuando el contrato de consulta y catálogo de usuarios asignables quede definido, evitando datos ficticios.
+- Git: sin cambios funcionales de fase 3; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Puerto de desarrollo fase 3
+
+- `ng serve` configurado por defecto en `0.0.0.0:5300`; origen local OIDC actualizado a `http://localhost:5300` en la autoridad central.
+- Git: cambio sin commit; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Usuario global y cambio de organización
+
+- Login reducido a usuario/contraseña; usa la última organización accedida. Si no existe membresía activa, muestra “Solicitar unirme a una organización” sin inventar todavía un flujo de aprobación.
+- Selector de organización agregado al shell; al cambiar revoca el refresh token anterior y reinicia Authorization Code + PKCE para obtener claims del nuevo tenant.
+- Validación: build exitoso y pruebas 4/4.
+- Git: cambios sin commit; fase 3 funcional pausada; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Checkpoint y reanudación de fase 3
+
+- Git: checkpoint previo confirmado en `6da67c0` (`feat: support organization session switching`); repositorio limpio tras el commit. Sin push, merge, tag ni PR.
+- Interfaz: nueva navegación y pantalla `/rutas`; consulta rutas y usuarios asignables reales, crea rutas con supervisor y uno o más cobradores, y muestra estados vacío, carga, éxito y error.
+- Autenticación API: `authorizedFetch` adjunta el bearer token en memoria y reintenta una vez después de rotar el refresh token ante `401`.
+- Validación: build de producción exitoso; pruebas 4/4. La prueba del shell se actualizó con proveedor de router tras incorporar la navegación.
+- Git: este nuevo corte de fase 3 queda sin commit; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Cierre funcional de fase 3
+
+- `/configuracion`: zona horaria IANA, moneda ISO y cupos generales anulables, sin inventar valores para organizaciones existentes.
+- `/rutas`: alta, listado, edición, activación/desactivación, reasignación, cupos heredados/sobrescritos y valores efectivos.
+- Seguridad: contratos reales con bearer en memoria y un refresh ante `401`; tenant ausente de los comandos.
+- Validación: build de producción exitoso; 8/8 pruebas de shell, tema, configuración y rutas.
+- Git: cambios de fase 3 sin commit; push, merge, tag y PR no autorizados.
