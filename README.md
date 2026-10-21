@@ -1,6 +1,6 @@
 # MF.cobroup-frontend-admin
 
-PWA administrativa de COBROUP por organización. Fase 1 ofrece shell, ruta base, temas y contratos técnicos; no simula configuración, aprobaciones ni reportes.
+PWA administrativa de COBROUP por organización. Fase 2 incorpora ingreso por organización y usuario, Authorization Code + PKCE, callback, refresh rotatorio en memoria y logout con revocación. No simula configuración, aprobaciones ni reportes.
 
 ## Requisitos
 
@@ -15,4 +15,4 @@ npm test -- --watch=false
 npm run build
 ```
 
-El build de producción habilita el service worker. La API administrativa se configurará detrás de `/api/admin/v1`.
+El build de producción habilita el service worker. En desarrollo, `proxy.conf.json` dirige `/identity` a la autoridad HTTPS. En despliegue, el gateway debe conservar esa ruta bajo el mismo origen. Los tokens no se guardan en `localStorage` ni `sessionStorage`; solo el estado y verifier PKCE de un uso sobreviven la redirección.
