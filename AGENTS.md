@@ -3,20 +3,20 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.0.8.
+- Maestro: `../cobroup.md/COBROUP.md` 1.2.0.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-5-plantillas-excepciones`.
+- Rama activa: `feature/fase-6-prestamos-cronograma`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 5; resultado: COMPLETADA_FUNCIONALMENTE.
+- Fase: 6; resultado: COMPLETADA_FUNCIONALMENTE.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 5 completas funcionalmente, 4 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
-- Corte actual: administración de plantillas versionadas y bandeja de excepciones aprobadas/rechazadas; build productivo limpio con 0 warnings y 12/12 pruebas existentes.
+- Línea base: 9 fases totales; 6 completas funcionalmente, 3 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
+- Corte actual: supervisión e inspección administrativa de préstamos y cronogramas (`/prestamos`); build productivo limpio con 0 warnings y 0 errores; 18/18 pruebas Vitest pasando; budget SCSS < 4.00 kB.
 
 ## Historial cronológico (append-only)
 
@@ -107,4 +107,21 @@
 - Decisiones administrativas (AC-08): modal de aprobación y rechazo con notas de auditoría, retroalimentación inmediata de éxito/error y bloqueo de acciones concurrentes.
 - Navegación: incorporada la ruta protegida `/excepciones` con título de página y enlace en la barra principal.
 - Validación: build de producción con 0 errores y 0 warnings respetando presupuestos de estilo; 12/12 pruebas ejecutadas y aprobadas en Vitest.
-- Git: cambios de fase 5 sin commit; push, merge, tag y PR no autorizados.
+- Git: commit de fase 5 autorizado por el usuario: `b6594be` (`feat(loan-exceptions): implement administrative exception management page and decision modal`); push, merge, tag y PR permanecen prohibidos.
+
+### 2026-10-21 — Cierre funcional de fase 6: supervisión e inspección de préstamos
+
+- Modelos y servicios:
+  - `LoanDetails`, `LoanSearchItem`, `InstallmentItem`, `LoanSearchResponse` en `loan.models.ts`.
+  - `LoansService`: métodos `search`, `get` y `listByCustomer` consumiendo `/api/v1/loans` en BackendAdmin.
+- Experiencia de usuario y vistas:
+  - Módulo `/prestamos`: listado de créditos multi-ruta con filtros dinámicos por ruta operativa y estado (`Active`, `PaidOff`, `Cancelled`).
+  - Tarjetas de crédito con indicadores de principal, tasa de interés y saldo pendiente actual.
+  - Modal de inspección de crédito: visualización de datos de originación (ruta, actor, fecha UTC) y tabla detallada de cronograma con cuotas, vencimientos, monto esperado, monto pagado y badges de estado.
+  - Navegación: enlace en la barra principal de `main-layout.component.html` y ruta `/prestamos` en `app.routes.ts`.
+- Rendimiento y estilos:
+  - `loans.page.scss` optimizado a 3.7 kB, cumpliendo el presupuesto estricto de Angular (< 4.00 kB).
+- Validación:
+  - 18/18 pruebas Vitest pasando en verde (incluyendo pruebas unitarias para `LoansService` y `LoansPage`).
+  - Build de producción generado con 0 advertencias y 0 errores (`ng build`).
+- Git: rama `feature/fase-6-prestamos-cronograma` lista para commit de cierre de fase tras autorización del usuario; push, merge, tag y PR no autorizados.

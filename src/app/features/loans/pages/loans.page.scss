@@ -1,0 +1,34 @@
+.loans-page, .modal-card, .loans-grid, .schedule-section { display: grid; gap: 1rem; }
+.page-heading, .card-header, .modal-header, .card-footer, .filters-bar, .status-pills, .filter-group, .modal-footer { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.page-heading { align-items: flex-end; }
+.meta, .frequency-badge, .due-info, .state-message, .eyebrow { color: var(--color-text-muted); font-size: .8rem; margin: 0; }
+.eyebrow { font-weight: 700; text-transform: uppercase; }
+h2, h3, h4 { margin: 0; }
+.message { padding: .75rem; border-radius: var(--radius-sm); }
+.error { color: var(--color-danger); border: 1px solid var(--color-danger); }
+.filters-bar, .loan-card, .term-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: .75rem 1rem; }
+.filter-group select { padding: .5rem .75rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-background); color: var(--color-text); font: inherit; }
+.status-pills button { padding: .3rem .6rem; border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text); font-size: .8rem; cursor: pointer; }
+.status-pills button.active { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); font-weight: 700; }
+.loans-grid { grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.loan-card { cursor: pointer; box-shadow: var(--shadow-raised); }
+.loan-card:hover { border-color: var(--color-primary); }
+.status-badge { padding: .2rem .5rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+.status-active, .status-pending { background: #dcfce7; color: #16a34a; }
+.status-paidoff, .status-paid { background: #e0f2fe; color: #0284c7; }
+.status-cancelled, .status-partiallypaid { background: #fef9c3; color: #ca8a04; }
+.card-metrics, .detail-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr)); gap: .5rem; }
+.card-metrics { padding: .5rem 0; border: solid var(--color-border); border-width: 1px 0; }
+.metric-label, .term-label { font-size: .7rem; color: var(--color-text-muted); text-transform: uppercase; display: block; }
+.metric-val, .term-value { font-size: 1rem; font-weight: 800; }
+.highlight .metric-val, .highlight .term-value, .view-link { color: var(--color-primary); font-weight: 700; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+.modal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); width: 100%; max-width: 46rem; max-height: 90vh; overflow-y: auto; padding: 1.25rem; }
+.btn-close { background: transparent; border: 0; font-size: 1.2rem; cursor: pointer; color: var(--color-text-muted); }
+.table-container { max-height: 18rem; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: .85rem; text-align: left; }
+.schedule-table th, .schedule-table td { padding: .4rem .6rem; border-bottom: 1px solid var(--color-border); }
+.schedule-table th { background: var(--color-background); position: sticky; top: 0; }
+.btn-secondary { padding: .6rem 1.25rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; color: var(--color-text); background: transparent; }
+.state-message { padding: 2rem; text-align: center; }
+@media (max-width: 40rem) { .page-heading, .filters-bar, .card-metrics, .detail-metrics { flex-direction: column; grid-template-columns: 1fr; } }
