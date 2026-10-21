@@ -10,13 +10,13 @@
 
 ## Estado actual
 
-- Fase: 5; resultado: EN_CURSO.
+- Fase: 5; resultado: COMPLETADA_FUNCIONALMENTE.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 4 completas, 1 en curso y 4 posteriores. Informe: `../cobroup.md/informe/avance.md`.
-- Corte actual: administración y versionado de plantillas; build productivo y 10/10 pruebas existentes.
+- Línea base: 9 fases totales; 5 completas funcionalmente, 4 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
+- Corte actual: administración de plantillas versionadas y bandeja de excepciones aprobadas/rechazadas; build productivo limpio con 0 warnings y 12/12 pruebas existentes.
 
 ## Historial cronológico (append-only)
 
@@ -99,4 +99,12 @@
 - Seguridad: usa bearer en memoria; no transmite tenant y depende de la validación Admin del servidor.
 - Validación: build productivo exitoso y 10/10 pruebas existentes.
 - Pendiente de fase: bandeja de solicitudes excepcionales y decisión administrativa.
+- Git: cambios de fase 5 sin commit; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Cierre funcional de fase 5: bandeja de excepciones de crédito
+
+- Interfaz: nueva pantalla `/excepciones` con selector de filtros (Pendientes, Aprobadas, Rechazadas, Todas), visualización de términos solicitados (monto, plazo, porcentaje), justificación del solicitante y trazabilidad de decisión.
+- Decisiones administrativas (AC-08): modal de aprobación y rechazo con notas de auditoría, retroalimentación inmediata de éxito/error y bloqueo de acciones concurrentes.
+- Navegación: incorporada la ruta protegida `/excepciones` con título de página y enlace en la barra principal.
+- Validación: build de producción con 0 errores y 0 warnings respetando presupuestos de estilo; 12/12 pruebas ejecutadas y aprobadas en Vitest.
 - Git: cambios de fase 5 sin commit; push, merge, tag y PR no autorizados.
