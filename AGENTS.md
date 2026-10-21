@@ -3,19 +3,19 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.0.5.
+- Maestro: `../cobroup.md/COBROUP.md` 1.0.7.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
 - Rama activa: `feature/fase-4-clientes`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 4; resultado: EN_CURSO.
+- Fase: 4; resultado: COMPLETADA.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 3 completas, 1 en curso y 5 pendientes. Informe: `../cobroup.md/informe/avance.md`.
+- Línea base: 9 fases totales; 4 completas y 5 pendientes. Informe: `../cobroup.md/informe/avance.md`.
 - Corte actual: consulta, detalle, traslado y estado de clientes mediante fachada administrativa; build productivo y 10/10 pruebas.
 
 ## Historial cronológico (append-only)
@@ -84,3 +84,10 @@
 - Seguridad: contratos reales con bearer en memoria y un refresh ante `401`; tenant ausente de los comandos.
 - Validación: build de producción exitoso; 8/8 pruebas de shell, tema, configuración y rutas.
 - Git: cambios de fase 3 sin commit; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Cierre funcional de fase 4
+
+- `/clientes`: listado, búsqueda, detalle, traslado de ruta y activación/desactivación mediante la fachada administrativa; teléfonos y ubicaciones se preservan en las actualizaciones.
+- Seguridad: no envía tenant y depende del bearer vigente; las acciones administrativas se vuelven a validar en BackendAdmin y Backend operativo.
+- Validación: build productivo exitoso y 10/10 pruebas.
+- Git: commit de fase 4 autorizado; push, merge, tag y PR permanecen prohibidos.
