@@ -3,20 +3,20 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.2.0.
+- Maestro: `../cobroup.md/COBROUP.md` 1.3.0.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-6-prestamos-cronograma`.
+- Rama activa: `feature/fase-7-pagos-conciliacion`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 6; resultado: COMPLETADA_FUNCIONALMENTE.
+- Fase: 7; resultado: COMPLETADA_FUNCIONALMENTE.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 6 completas funcionalmente, 3 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
-- Corte actual: supervisión e inspección administrativa de préstamos y cronogramas (`/prestamos`); build productivo limpio con 0 warnings y 0 errores; 18/18 pruebas Vitest pasando; budget SCSS < 4.00 kB.
+- Línea base: 9 fases totales; 7 completas funcionalmente, 2 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
+- Corte actual: catálogo y autorización de medios de pago (`/medios-pago`); creación, edición reactiva, ordenamiento y toggle de activación exclusivo para rol Admin (AC-13); build productivo limpio con 0 warnings y 0 errores; 24/24 pruebas Vitest pasando; budget SCSS < 4.00 kB.
 
 ## Historial cronológico (append-only)
 
@@ -124,4 +124,22 @@
 - Validación:
   - 18/18 pruebas Vitest pasando en verde (incluyendo pruebas unitarias para `LoansService` y `LoansPage`).
   - Build de producción generado con 0 advertencias y 0 errores (`ng build`).
-- Git: rama `feature/fase-6-prestamos-cronograma` lista para commit de cierre de fase tras autorización del usuario; push, merge, tag y PR no autorizados.
+- Git: commit local `b1f7f48` (`feat(loans): implement administrative loan supervision and schedule inspection`) en rama `feature/fase-6-prestamos-cronograma`; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Cierre funcional de fase 7: catálogo y autorización de medios de pago
+
+- Modelos y servicios:
+  - `PaymentMethodItem`, `CreatePaymentMethodRequest`, `UpdatePaymentMethodRequest` en `payment-method.models.ts`.
+  - `PaymentMethodsService`: métodos `list`, `get`, `create`, `update` y `toggleStatus` consumiendo `/identity/api/v1/payment-methods`.
+- Experiencia de usuario y vistas:
+  - Nueva pantalla `/medios-pago`: listado tabular de medios de pago autorizados para el tenant, mostrando orden, nombre, badge de estado (Activo/Inactivo) y fecha de actualización.
+  - Gestión y auditoría (AC-13): modal para crear y editar medios de pago con validación de nombre obligatorio y orden numérico; botón de activación/desactivación reactivo con actualización instantánea de estado.
+  - Navegación: enlace `/medios-pago` en la barra superior de `main-layout.component.html` y ruta protegida en `app.routes.ts`.
+- Rendimiento, temas y presupuestos:
+  - Estilos refactorizados con estricto uso de tokens semánticos `var(--color-...)` de `src/app/themes/`, eliminando códigos hexadecimales arbitrarios.
+  - `payment-methods.page.scss` optimizado a 2.6 kB, cumpliendo el presupuesto estricto de Angular (< 4.00 kB) con 0 advertencias.
+- Validación de arquitectura: cumplimiento estricto de FRAMEWORK_DESARROLLO_FRONTEND 1.0 (feature-based, contratos tipados en data-access, componentes desacoplados de HTTP, tema claro inicial con Dark toggle funcional y PWA compatible).
+- Validación de suites:
+  - 24/24 pruebas Vitest pasando en verde (incluyendo `PaymentMethodsService` y `PaymentMethodsPage`).
+  - Build de producción generado con 0 advertencias y 0 errores (`ng build`).
+- Git: rama `feature/fase-7-pagos-conciliacion`; push, merge, tag y PR no autorizados.

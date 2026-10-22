@@ -1,0 +1,114 @@
+<section class="payment-methods-page">
+  <header class="page-header">
+    <div>
+      <span class="badge">Administración Financiera</span>
+      <h1>Medios de Pago Autorizados</h1>
+      <p class="subtitle">Gestiona y autoriza los medios de pago disponibles para los cobradores del tenant (AC-13).</p>
+    </div>
+    <button id="btn-create-payment-method" type="button" class="btn btn-primary" (click)="openCreate()">
+      + Nuevo Medio de Pago
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="alert error" role="alert">
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (success()) {
+    <div class="alert success" role="status">
+      <span>{{ success() }}</span>
+    </div>
+  }
+
+  <div class="card table-card">
+    @if (loading() && items().length === 0) {
+      <div class="state-message">Cargando medios de pago...</div>
+    } @else if (items().length === 0) {
+      <div class="empty-state">
+        <p>No se han registrado medios de pago autorizados en esta organización.</p>
+        <button type="button" class="btn btn-secondary" (click)="openCreate()">Crear el primer medio de pago</button>
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="text-center">Orden</th>
+            <th>Nombre del Medio</th>
+            <th>Estado</th>
+            <th>Última Actualización</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td class="text-center order-col">#{{ item.displayOrder }}</td>
+              <td class="name-col">
+                <strong>{{ item.name }}</strong>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
+                  {{ item.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="meta-col">{{ item.updatedAtUtc | date:'mediumDate' }}</td>
+              <td class="text-right actions-col">
+                <button
+                  type="button"
+                  class="btn-action"
+                  [ngClass]="item.isActive ? 'btn-deactivate' : 'btn-activate'"
+                  (click)="toggleStatus(item)"
+                >
+                  {{ item.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button type="button" class="btn-action btn-edit" (click)="openEdit(item)">
+                  Editar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingItem() ? 'Editar Medio de Pago' : 'Nuevo Medio de Pago' }}</h3>
+          <button type="button" class="btn-close" (click)="closeModal()">✕</button>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="form-group">
+            <label for="methodName">Nombre del Medio de Pago *</label>
+            <input
+              id="methodName"
+              type="text"
+              formControlName="name"
+              placeholder="Ej: Efectivo, Nequi, Daviplata, Transferencia"
+            />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <span class="field-error">El nombre es obligatorio (máx 50 caracteres).</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="displayOrder">Orden de Visualización *</label>
+            <input id="displayOrder" type="number" formControlName="displayOrder" min="1" max="999" />
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
+              {{ submitting() ? 'Guardando...' : 'Guardar Medio de Pago' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</section>
