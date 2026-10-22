@@ -50,6 +50,18 @@ export const routes: Routes = [
     loadComponent: () => import('./features/payment-methods/pages/payment-methods.page').then((module) => module.PaymentMethodsPage),
     title: 'Medios de Pago | COBROUP Administración',
   },
+  {
+    path: 'mapa',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/map-supervision/pages/map-supervision.page').then((module) => module.MapSupervisionPage),
+    title: 'Mapa y Supervisión | COBROUP Administración',
+  },
+  {
+    path: 'analitica',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/analytics/pages/analytics.page').then((module) => module.AnalyticsPage),
+    title: 'Analítica de Cartera | COBROUP Administración',
+  },
   { path: 'login', loadComponent: () => import('./features/auth/pages/login.page').then((module) => module.LoginPage), title: 'Acceso administrativo | COBROUP' },
   { path: 'auth/callback', loadComponent: () => import('./features/auth/pages/auth-callback.page').then((module) => module.AuthCallbackPage), title: 'Validando acceso | COBROUP' },
   { path: '**', redirectTo: '' },

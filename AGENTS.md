@@ -3,20 +3,20 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.3.0.
+- Maestro: `../cobroup.md/COBROUP.md` 1.5.0.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-7-pagos-conciliacion`.
+- Rama activa: `feature/fase-8-mapas-analitica`.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
 
-- Fase: 7; resultado: COMPLETADA_FUNCIONALMENTE.
+- Fase: 8; resultado: COMPLETADA_FUNCIONALMENTE.
 - Angular 21.2.25 LTS, CLI/build 21.2.27, TypeScript 5.9.3, RxJS 7.8.2.
 - Node 22.15.1 LTS; npm 11.6.2.
 - PWA: activada; tema: light/dark implementado.
 - Auditoría independiente: no realizada.
-- Línea base: 9 fases totales; 7 completas funcionalmente, 2 posteriores pendientes. Informe: `../cobroup.md/informe/avance.md`.
-- Corte actual: catálogo y autorización de medios de pago (`/medios-pago`); creación, edición reactiva, ordenamiento y toggle de activación exclusivo para rol Admin (AC-13); build productivo limpio con 0 warnings y 0 errores; 24/24 pruebas Vitest pasando; budget SCSS < 4.00 kB.
+- Línea base: 9 fases totales; 8 completas funcionalmente, 1 posterior pendiente. Informe: `../cobroup.md/informe/avance.md`.
+- Corte actual: Fase 7 cerrada en Git (`e80f442`); Fase 8 completada: supervisión de rutas sobre mapa cartográfico (`/mapa`) con OpenStreetMap y filtros dinámicos por estado, panel analítico de cartera (`/analitica`) con 6 KPI cards, tabla de tramos de envejecimiento (Aging Report) con barras proporcionales y ranking comparativo de rutas por riesgo PAR%; componente UI reutilizable `map-view`; build productivo limpio con 0 warnings y 0 errores; 31/31 pruebas Vitest pasando; budget SCSS < 4.00 kB.
 
 ## Historial cronológico (append-only)
 
@@ -143,3 +143,30 @@
   - 24/24 pruebas Vitest pasando en verde (incluyendo `PaymentMethodsService` y `PaymentMethodsPage`).
   - Build de producción generado con 0 advertencias y 0 errores (`ng build`).
 - Git: rama `feature/fase-7-pagos-conciliacion`; push, merge, tag y PR no autorizados.
+
+### 2026-10-21 — Cierre versionado de fase 7 en Git
+
+- Prompt: correcto, hacer commits de fase 7 e iniciar fase 8.
+- Resultado: fase 7 validada; commit autorizado: SÍ, commit local `e80f442` (`feat(payment-methods): implement payment methods administration and status toggle`).
+- Rama de trabajo creada y activa: `feature/fase-8-mapas-analitica`.
+- Operaciones no autorizadas: push, merge, tag y PR.
+
+### 2026-10-21 — Implementación de fase 8: mapas, georreferenciación y analítica
+
+- Componente UI reutilizable:
+  - `src/app/shared/ui/map-view/map-view.component.ts`, `.html`, `.scss`: componente standalone con visualización cartográfica OpenStreetMap, marcadores semánticos y popups con información de cuota y mora.
+- Modelos y servicios:
+  - `analytics.models.ts`: contratos tipados `AgingBucket`, `RoutePerformanceItem`, `PortfolioOverview`.
+  - `analytics.service.ts`: integración de `getOverview`, `getRoutesPerformance`, `getAging` consumiendo `/identity/api/v1/analytics`.
+  - `map-supervision.service.ts`: integración de `getRouteLocations` consumiendo `/identity/api/v1/map/route-locations`.
+- Páginas y experiencia de usuario:
+  - `/mapa` (`map-supervision.page.ts`): supervisión cartográfica multi-ruta con selector de ruta, selector de fecha, filtros dinámicos por estado (Todos, Mora, Vencen hoy, Cobrados), conteos reactivos y panel flotante de cliente.
+  - `/analitica` (`analytics.page.ts`): panel ejecutivo con 6 KPI cards, tabla de Aging Report con distribución porcentual de cartera y barras gráficas de progreso, y ranking comparativo de rutas por riesgo PAR%.
+  - Navegación: enlaces en la barra principal de `main-layout.component.html` y rutas en `app.routes.ts`.
+- Estilos, temas y presupuestos:
+  - SCSS desacoplado con tokens semánticos (`var(--color-...)`); presupuesto estricto de Angular (< 4.00 kB) cumplido con 0 advertencias.
+- Validación de arquitectura: cumplimiento estricto de FRAMEWORK_DESARROLLO_FRONTEND 1.0 (feature-based, componentes comunes en `shared/ui`, servicios HTTP dedicados).
+- Validación de suites:
+  - 31/31 pruebas Vitest pasando en verde (incluyendo 4 pruebas para `AnalyticsService` y 3 pruebas para `MapSupervisionService`).
+  - Build de producción generado con 0 advertencias y 0 errores (`ng build`).
+- Git: rama `feature/fase-8-mapas-analitica`; push, merge, tag y PR no autorizados.
