@@ -1,0 +1,148 @@
+<section class="analytics-container">
+  <div class="page-header">
+    <div>
+      <h2 class="title">Analítica y supervisión de cartera</h2>
+      <p class="subtitle">Monitoreo ejecutivo de colocación, efectividad de recaudo y riesgo de mora</p>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="loadAnalytics()" class="filters-row">
+      <select formControlName="routeId" (change)="loadAnalytics()" aria-label="Filtrar por ruta">
+        <option value="">Todas las rutas</option>
+        @for (route of routes(); track route.id) {
+          <option [value]="route.id">{{ route.name }}</option>
+        }
+      </select>
+      <input type="date" formControlName="date" (change)="loadAnalytics()" aria-label="Fecha de corte" />
+    </form>
+  </div>
+
+  @if (error()) {
+    <div class="alert-error" role="alert">{{ error() }}</div>
+  }
+
+  @if (overview(); as data) {
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="label">Cartera colocada</span>
+        <strong class="val">{{ data.totalPlacedAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="foot">{{ data.totalActiveLoans }} préstamos activos</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="label">Recaudado histórico</span>
+        <strong class="val val-success">{{ data.totalCollectedAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="foot">Capital + interés recuperado</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="label">Saldo por cobrar</span>
+        <strong class="val">{{ data.totalBalanceAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="foot">{{ data.totalActiveCustomers }} clientes activos</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="label">Cartera en mora (PAR)</span>
+        <strong class="val val-danger">{{ data.totalOverdueAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+        <span class="foot">Cuotas vencidas impagas</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="label">Índice morosidad PAR%</span>
+        <strong class="val" [class.val-danger]="data.portfolioAtRiskRate > 10">{{ data.portfolioAtRiskRate | number:'1.2-2' }}%</strong>
+        <span class="foot">Mora sobre saldo activo</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="label">Efectividad diaria</span>
+        <strong class="val val-success">{{ data.dailyCollectionEfficiencyRate | number:'1.1-1' }}%</strong>
+        <span class="foot">Cobros vs cuotas del día</span>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="card-head">
+        <h3>Reporte de envejecimiento de cartera (Aging report)</h3>
+        <span class="badge-total">Corte: {{ data.targetDate }}</span>
+      </div>
+
+      <div class="aging-table-wrapper">
+        <table class="aging-table">
+          <thead>
+            <tr>
+              <th>Tramo de vencimiento</th>
+              <th>Préstamos</th>
+              <th>Monto en mora</th>
+              <th>% Cartera</th>
+              <th>Distribución visual</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (bucket of data.agingBuckets; track bucket.bucketKey) {
+              <tr>
+                <td><strong>{{ bucket.label }}</strong></td>
+                <td>{{ bucket.loanCount }}</td>
+                <td>{{ bucket.totalAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                <td>
+                  {{ data.totalBalanceAmount > 0 ? (bucket.totalAmount / data.totalBalanceAmount * 100 | number:'1.1-1') : '0.0' }}%
+                </td>
+                <td class="bar-col">
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      [class.current]="bucket.bucketKey === 'current'"
+                      [class.overdue]="bucket.bucketKey !== 'current'"
+                      [style.width.%]="data.totalBalanceAmount > 0 ? (bucket.totalAmount / data.totalBalanceAmount * 100) : 0"
+                    ></div>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    @if (data.routesPerformance.length > 0) {
+      <div class="section-card">
+        <div class="card-head">
+          <h3>Comparativa y ranking de rutas</h3>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="routes-table">
+            <thead>
+              <tr>
+                <th>Ruta</th>
+                <th>Clientes</th>
+                <th>Préstamos</th>
+                <th>Colocado</th>
+                <th>Saldo activo</th>
+                <th>Mora vencida</th>
+                <th>PAR%</th>
+                <th>Nivel de riesgo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rp of data.routesPerformance; track rp.routeId) {
+                <tr>
+                  <td><strong>{{ getRouteName(rp.routeId) }}</strong></td>
+                  <td>{{ rp.activeCustomersCount }}</td>
+                  <td>{{ rp.activeLoansCount }}</td>
+                  <td>{{ rp.totalPlacedAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                  <td>{{ rp.totalBalanceAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                  <td class="txt-danger">{{ rp.overdueBalanceAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+                  <td><strong>{{ rp.portfolioAtRiskRate | number:'1.2-2' }}%</strong></td>
+                  <td>
+                    <span class="risk-badge" [ngClass]="getParBadgeClass(rp.portfolioAtRiskRate)">
+                      {{ rp.portfolioAtRiskRate <= 5 ? 'Bajo' : (rp.portfolioAtRiskRate <= 15 ? 'Moderado' : 'Alto') }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
+</section>
