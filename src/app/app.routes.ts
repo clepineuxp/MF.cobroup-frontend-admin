@@ -15,6 +15,18 @@ export const routes: Routes = [
     title: 'Rutas | COBROUP Administración',
   },
   {
+    path: 'plantillas',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/loan-templates/pages/loan-templates.page').then((module) => module.LoanTemplatesPage),
+    title: 'Plantillas | COBROUP Administración',
+  },
+  {
+    path: 'excepciones',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/loan-exceptions/pages/loan-exceptions.page').then((module) => module.LoanExceptionsPage),
+    title: 'Excepciones | COBROUP Administración',
+  },
+  {
     path: 'configuracion',
     canActivate: [authGuard],
     loadComponent: () => import('./features/organization-settings/pages/organization-settings.page').then((module) => module.OrganizationSettingsPage),

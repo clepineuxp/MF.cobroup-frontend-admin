@@ -1,0 +1,165 @@
+<section class="page-heading" aria-labelledby="exceptions-title">
+  <div>
+    <p class="eyebrow">Aprobaciones de crédito</p>
+    <h2 id="exceptions-title">Excepciones de préstamo</h2>
+  </div>
+  <p>
+    Bandeja administrativa para evaluar términos solicitados fuera de plantilla.
+    Solo el Administrador puede aprobar o rechazar estas solicitudes (AC-08).
+  </p>
+</section>
+
+@if (error()) {
+  <p class="message error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="message success" role="status">{{ success() }}</p>
+}
+
+<div class="filter-bar">
+  <button
+    type="button"
+    class="filter-tab"
+    [class.active]="filterStatus() === 'Pending'"
+    (click)="setFilter('Pending')">
+    Pendientes
+  </button>
+  <button
+    type="button"
+    class="filter-tab"
+    [class.active]="filterStatus() === 'Approved'"
+    (click)="setFilter('Approved')">
+    Aprobadas
+  </button>
+  <button
+    type="button"
+    class="filter-tab"
+    [class.active]="filterStatus() === 'Rejected'"
+    (click)="setFilter('Rejected')">
+    Rechazadas
+  </button>
+  <button
+    type="button"
+    class="filter-tab"
+    [class.active]="filterStatus() === 'All'"
+    (click)="setFilter('All')">
+    Todas
+  </button>
+</div>
+
+<section class="panel exceptions-container" aria-labelledby="exceptions-list-title">
+  <div class="list-heading">
+    <h3 id="exceptions-list-title">Solicitudes registradas</h3>
+    <span>{{ items().length }}</span>
+  </div>
+
+  @if (loading()) {
+    <p class="state-message">Cargando solicitudes de excepción…</p>
+  } @else if (items().length === 0) {
+    <p class="state-message empty">No se encontraron solicitudes con el filtro seleccionado.</p>
+  } @else {
+    <div class="exceptions-grid">
+      @for (item of items(); track item.id) {
+        <article class="exception-card">
+          <header class="card-header">
+            <div>
+              <h4 class="customer-name">{{ item.customerName || 'Cliente sin nombre' }}</h4>
+              <p class="meta">Solicitado por {{ item.createdByRole }} · {{ item.createdAtUtc | date:'medium' }}</p>
+            </div>
+            <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+              {{ getStatusLabel(item.status) }}
+            </span>
+          </header>
+
+          <div class="terms-grid">
+            <div class="term-box">
+              <span class="term-label">Monto propuesto</span>
+              <span class="term-value">{{ item.proposedAmount | currency }}</span>
+            </div>
+            <div class="term-box">
+              <span class="term-label">Plazo propuesto</span>
+              <span class="term-value">{{ item.proposedDays }} días</span>
+            </div>
+            <div class="term-box">
+              <span class="term-label">Porcentaje propuesto</span>
+              <span class="term-value">{{ item.proposedPercentage }} %</span>
+            </div>
+          </div>
+
+          <div class="reason-section">
+            <span class="section-label">Motivo de la excepción:</span>
+            <p class="reason-text">{{ item.reason }}</p>
+          </div>
+
+          @if (item.decisionNotes) {
+            <div class="notes-section">
+              <span class="section-label">Observaciones de la decisión:</span>
+              <p class="notes-text">{{ item.decisionNotes }}</p>
+              @if (item.decidedAtUtc) {
+                <small class="meta">Fecha de decisión: {{ item.decidedAtUtc | date:'medium' }}</small>
+              }
+            </div>
+          }
+
+          @if (item.status === 'Pending') {
+            <footer class="card-actions">
+              <button
+                type="button"
+                class="btn-approve"
+                (click)="openDecisionModal(item, 'Approved')">
+                Aprobar excepción
+              </button>
+              <button
+                type="button"
+                class="btn-reject"
+                (click)="openDecisionModal(item, 'Rejected')">
+                Rechazar
+              </button>
+            </footer>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>
+
+@if (activeDecision(); as active) {
+  <div class="modal-backdrop" (click)="closeDecisionModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <h3>{{ active.decision === 'Approved' ? 'Aprobar excepción' : 'Rechazar excepción' }}</h3>
+      <p class="modal-subtitle">
+        {{ active.decision === 'Approved'
+            ? 'Confirmarás los términos especiales para el cliente ' + active.item.customerName + '.'
+            : 'Rechazarás la solicitud excepcional para el cliente ' + active.item.customerName + '.' }}
+      </p>
+
+      <label class="modal-label">
+        Notas o justificación de la decisión (opcional)
+        <textarea
+          rows="3"
+          maxlength="500"
+          placeholder="Ingresa comentarios para la auditoría..."
+          [(ngModel)]="decisionNotes">
+        </textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="submittingDecision()"
+          (click)="closeDecisionModal()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          [class.btn-approve]="active.decision === 'Approved'"
+          [class.btn-reject]="active.decision === 'Rejected'"
+          [disabled]="submittingDecision()"
+          (click)="confirmDecision()">
+          {{ submittingDecision() ? 'Guardando…' : (active.decision === 'Approved' ? 'Confirmar aprobación' : 'Confirmar rechazo') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
