@@ -63,6 +63,5 @@ export const routes: Routes = [
     title: 'Analítica de Cartera | COBROUP Administración',
   },
   { path: 'login', loadComponent: () => import('./features/auth/pages/login.page').then((module) => module.LoginPage), title: 'Acceso administrativo | COBROUP' },
-  { path: 'auth/callback', loadComponent: () => import('./features/auth/pages/auth-callback.page').then((module) => module.AuthCallbackPage), title: 'Validando acceso | COBROUP' },
   { path: '**', redirectTo: '' },
 ];
