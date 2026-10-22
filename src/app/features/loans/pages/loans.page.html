@@ -1,0 +1,145 @@
+<div class="loans-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">Auditoría y Supervisión</p>
+      <h2>Cartera y Préstamos</h2>
+      <p class="meta">Supervisión centralizada de créditos y cronogramas de amortización entre rutas operativas.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="message error" role="alert">{{ error() }}</div>
+  }
+
+  <section class="filters-bar">
+    <div class="filter-group">
+      <label for="route-filter">Ruta operativa:</label>
+      <select id="route-filter" (change)="setRouteFilter($event)">
+        <option value="">Todas las rutas</option>
+        @for (route of routes(); track route.id) {
+          <option [value]="route.id">{{ route.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="status-pills">
+      <button type="button" [class.active]="statusFilter() === ''" (click)="setStatusFilter('')">Todos</button>
+      <button type="button" [class.active]="statusFilter() === 'Active'" (click)="setStatusFilter('Active')">Activos</button>
+      <button type="button" [class.active]="statusFilter() === 'PaidOff'" (click)="setStatusFilter('PaidOff')">Liquidados</button>
+      <button type="button" [class.active]="statusFilter() === 'Cancelled'" (click)="setStatusFilter('Cancelled')">Cancelados</button>
+    </div>
+  </section>
+
+  @if (loading() && items().length === 0) {
+    <div class="state-message">Cargando cartera de préstamos...</div>
+  } @else if (items().length === 0) {
+    <div class="state-message">No se encontraron préstamos registrados para los filtros seleccionados.</div>
+  } @else {
+    <div class="loans-grid">
+      @for (loan of items(); track loan.id) {
+        <article class="loan-card" (click)="viewLoan(loan.id)" tabindex="0" (keyup.enter)="viewLoan(loan.id)">
+          <div class="card-header">
+            <div>
+              <h3>{{ loan.customerName }}</h3>
+              <span class="frequency-badge">{{ loan.paymentFrequency }} · {{ loan.installmentCount }} cuotas</span>
+            </div>
+            <span class="status-badge" [ngClass]="'status-' + loan.status.toLowerCase()">
+              {{ loan.status === 'Active' ? 'Activo' : (loan.status === 'PaidOff' ? 'Liquidado' : 'Cancelado') }}
+            </span>
+          </div>
+
+          <div class="card-metrics">
+            <div class="metric">
+              <span class="metric-label">Principal</span>
+              <span class="metric-val">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Tasa</span>
+              <span class="metric-val">{{ loan.interestRate }}%</span>
+            </div>
+            <div class="metric highlight">
+              <span class="metric-label">Saldo</span>
+              <span class="metric-val">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <span class="due-info">Vencimiento: {{ loan.dueAtUtc | date:'mediumDate' }}</span>
+            <span class="view-link">Inspeccionar cronograma →</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <!-- Loan Detail Inspection Modal -->
+  @if (selectedLoan(); as loan) {
+    <div class="modal-backdrop" (click)="closeDetail()">
+      <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Inspección de Cartera</p>
+            <h3>{{ loan.customerName }}</h3>
+            <p class="meta">Ruta: {{ loan.routeName }} · Creado por: {{ loan.createdByRole }} · {{ loan.createdAtUtc | date:'medium' }}</p>
+          </div>
+          <button type="button" class="btn-close" (click)="closeDetail()">✕</button>
+        </div>
+
+        <div class="detail-metrics">
+          <div class="term-box">
+            <span class="term-label">Principal</span>
+            <span class="term-value">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="term-box">
+            <span class="term-label">Tasa de interés</span>
+            <span class="term-value">{{ loan.interestRate }}%</span>
+          </div>
+          <div class="term-box">
+            <span class="term-label">Monto Total</span>
+            <span class="term-value">{{ loan.totalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="term-box highlight">
+            <span class="term-label">Saldo Pendiente</span>
+            <span class="term-value">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <div class="schedule-section">
+          <h4>Amortización y Cronograma ({{ loan.installments.length }} cuotas)</h4>
+          <div class="table-container">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Fecha Vencimiento</th>
+                  <th>Monto Esperado</th>
+                  <th>Monto Pagado</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (inst of loan.installments; track inst.number) {
+                  <tr>
+                    <td>{{ inst.number }}</td>
+                    <td>{{ inst.dueDate }}</td>
+                    <td>{{ inst.expectedAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                    <td>{{ inst.paidAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                    <td>
+                      <span class="status-badge" [ngClass]="'status-' + inst.status.toLowerCase()">
+                        {{ inst.status === 'Paid' ? 'Pagada' : (inst.status === 'PartiallyPaid' ? 'Parcial' : 'Pendiente') }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeDetail()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
