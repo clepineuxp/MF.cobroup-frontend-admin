@@ -226,3 +226,9 @@
 - Validación: 31/31 pruebas verdes en Vitest, compilación de producción `ng build` exitosa, 0 vulnerabilidades en `npm audit --omit=dev`.
 - Git: cambios preservados en el working tree sin commit, push, merge, tag ni PR.
 
+### 2026-10-23 — Corrección de inyección de contexto en authGuard
+
+- Diagnóstico: en `auth.guard.ts`, `inject(Router)` se invocaba tras `await auth.refreshAccessToken()`, causando el fallo de inyección en Angular `NG0203` ante usuarios no autenticados y abortando la redirección a `/login`.
+- Solución: inyección sincrónica de `Router` al inicio del guardia (`const router = inject(Router);`).
+- Validación: suite `src/app/core/auth/auth.guard.spec.ts` agregada; 39/39 pruebas Vitest aprobadas (14/14 suites).
+- Git: cambios preservados en el working tree sin commit, push, merge, tag ni PR.
