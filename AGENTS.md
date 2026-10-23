@@ -268,3 +268,11 @@
   - Presupuesto de estilos SCSS verificado (< 4.00 kB).
 - Git: rama `feature/visuals-theme`; commit autorizado por usuario: SÍ, commit local `b222cbf` (`feat(map): integrate leaflet with customer avatars, esri layers and theme satellite toggle`); push, merge, tag y PR no autorizados.
 
+
+### 2026-10-23 — Corrección del comando de pruebas en GitHub Actions
+
+- Solicitud: corregir el fallo del frontend admin mostrado en el job Run Automated Tests.
+- Causa: el workflow pasaba `--browsers=ChromeHeadless` al builder Vitest, activando pruebas en navegador sin un proveedor instalado.
+- Cambio: `.github/workflows/docker-ghcr.yml` ejecuta `npm test -- --watch=false`, usando el entorno jsdom ya disponible.
+- Validación: `node node_modules/@angular/cli/bin/ng.js test --watch=false` terminó con código 0; 39/39 pruebas y 14/14 suites aprobadas. Se invocó directamente el CLI porque npm no está disponible en el PATH de esta sesión; Node local v24.22.1, CI configurado con Node 22. `git diff --check` sin errores.
+- Git: rama `feature/visuals-theme`; cambios locales sin commit, push, merge, tag ni PR. Ejecución remota pendiente de publicar el cambio.
