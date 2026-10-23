@@ -68,8 +68,16 @@
     @if (selectedPoint(); as sel) {
       <div class="point-detail-card">
         <div class="detail-head">
-          <h3>{{ sel.customerName }}</h3>
-          <span class="status-pill" [style.--status-color]="sel.markerColor">{{ sel.status }}</span>
+          <div class="detail-avatar" [style.--status-color]="sel.markerColor">
+            @if (sel.avatarUrl) {
+              <img [src]="sel.avatarUrl" [alt]="sel.customerName" (error)="onAvatarError($event)" />
+            }
+            <span class="avatar-initials">{{ getInitials(sel.customerName) }}</span>
+          </div>
+          <div class="detail-title-group">
+            <h3>{{ sel.customerName }}</h3>
+            <span class="status-pill" [style.--status-color]="sel.markerColor">{{ sel.status }}</span>
+          </div>
         </div>
 
         @if (sel.businessOrWorkName) {

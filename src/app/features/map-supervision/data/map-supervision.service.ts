@@ -18,6 +18,7 @@ export interface AdminMapLocation {
   dueTodayAmount: number;
   status: string;
   markerColor: string;
+  avatarUrl?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
