@@ -3,12 +3,13 @@
   <p>Define límites y porcentajes reutilizables. Cada modificación crea una versión y no altera préstamos existentes.</p>
 </section>
 
-@if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+@if (error() && !editorOpen()) { <p class="message error" role="alert">{{ error() }}</p> }
 @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
 
-<div class="workspace">
-  <section class="panel" aria-labelledby="template-form-title">
-    <div class="form-heading"><h3 id="template-form-title">{{ editingId() ? 'Editar plantilla' : 'Nueva plantilla' }}</h3>@if (editingId()) { <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button> }</div>
+<button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva plantilla</button>
+@if (editorOpen()) {
+  <app-editor-dialog [title]="editingId() ? 'Editar plantilla' : 'Nueva plantilla'" [busy]="saving()" [error]="error()" (dismiss)="closeEditor()">
+@if (editorLoading()) { <p role="status">Cargando plantilla…</p> } @else if (editorLoadFailed()) { <p>Cierra el formulario y selecciona la plantilla para volver a intentar.</p> } @else {
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>Nombre <input formControlName="name" maxlength="120" autocomplete="off" /></label>
       <label>Descripción <textarea formControlName="description" maxlength="500" rows="3"></textarea></label>
@@ -32,23 +33,27 @@
       </label>
       <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : editingId() ? 'Crear nueva versión' : 'Crear plantilla' }}</button>
     </form>
+
     @if (selected()?.versions?.length) {
       <aside><h4>Historial</h4>@for (version of selected()!.versions!; track version.version) { <p><strong>v{{ version.version }}</strong> · {{ version.status }} · {{ version.recordedAtUtc | date:'medium' }}</p> }</aside>
     }
-  </section>
 
+}
+  </app-editor-dialog>
+}
+<p class="hint">Selecciona un registro para editarlo.</p>
+<div class="workspace">
   <section class="panel catalog" aria-labelledby="template-list-title">
     <div class="list-heading"><h3 id="template-list-title">Catálogo</h3><span>{{ templates().length }}</span></div>
     @if (loading()) { <p>Cargando plantillas…</p> }
     @else if (templates().length === 0) { <p class="empty">Aún no hay plantillas en esta organización.</p> }
     @for (template of templates(); track template.id) {
-      <article>
+      <article class="editable-record" role="button" tabindex="0" [attr.aria-label]="'Editar plantilla ' + template.name" (click)="edit(template)" (keydown.enter)="edit(template)" (keydown.space)="$event.preventDefault(); edit(template)">
         <div><h4>{{ template.name }}</h4><span class="status" [class.published]="template.status === 'Published'">{{ template.status }} · v{{ template.version }}</span></div>
         @if (template.description) { <p>{{ template.description }}</p> }
         <dl><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Rango de monto</dt><dd>{{ template.minPrincipalAmount | currency }} a {{ template.maxPrincipalAmount | currency }}</dd></div></dl>
         <p>Porcentajes: <strong>{{ template.minPercentage }} % a {{ template.maxPercentage }} %</strong></p>
         <p>Rutas asignadas: {{ template.routeIds.length }}</p>
-        <button type="button" class="secondary" (click)="edit(template)">Editar y ver versiones</button>
       </article>
     }
   </section>

@@ -1,3 +1,4 @@
+import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
 import { DatePipe, NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,7 +7,7 @@ import { PaymentMethodsService } from '../data/payment-methods.service';
 
 @Component({
   selector: 'app-payment-methods-page',
-  imports: [ReactiveFormsModule, DatePipe, NgClass],
+  imports: [EditorDialogComponent, ReactiveFormsModule, DatePipe, NgClass],
   templateUrl: './payment-methods.page.html',
   styleUrl: './payment-methods.page.scss',
 })
@@ -51,6 +52,7 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   openCreate(): void {
+    if (this.submitting()) return;
     this.editingItem.set(null);
     const nextOrder = (this.items().length > 0 ? Math.max(...this.items().map((i) => i.displayOrder)) + 1 : 1);
     this.form.reset({
@@ -63,6 +65,7 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   openEdit(item: PaymentMethodItem): void {
+    if (this.submitting()) return;
     this.editingItem.set(item);
     this.form.reset({
       name: item.name,
@@ -74,12 +77,19 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   closeModal(): void {
+    if (this.submitting()) return;
+    this.resetEditor();
+    this.error.set('');
+  }
+
+  private resetEditor(): void {
+    this.form.reset({ name: '', displayOrder: 1 });
     this.showModal.set(false);
     this.editingItem.set(null);
   }
 
   async save(): Promise<void> {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.submitting()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -106,7 +116,7 @@ export class PaymentMethodsPage implements OnInit {
         this.success.set(`Medio de pago "${raw.name}" creado con éxito.`);
       }
 
-      this.closeModal();
+      this.resetEditor();
       await this.loadItems();
     } catch (err: unknown) {
       this.error.set(err instanceof Error ? err.message : 'Error al guardar el medio de pago.');
@@ -116,6 +126,8 @@ export class PaymentMethodsPage implements OnInit {
   }
 
   async toggleStatus(item: PaymentMethodItem): Promise<void> {
+    if (this.submitting()) return;
+    this.submitting.set(true);
     try {
       this.error.set('');
       const updated = await this.service.toggleStatus(item.id, !item.isActive);
@@ -127,6 +139,6 @@ export class PaymentMethodsPage implements OnInit {
       );
     } catch (err: unknown) {
       this.error.set(err instanceof Error ? err.message : 'Error al cambiar el estado.');
-    }
+    } finally { this.submitting.set(false); }
   }
 }

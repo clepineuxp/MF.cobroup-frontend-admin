@@ -1,5 +1,6 @@
+import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoanTemplate, LoanTemplateClassification, LoanTemplateRequest, LoanTemplateStatus } from '../data/loan-template.models';
 import { RoutesService } from '../../routes/data/routes.service';
@@ -8,11 +9,24 @@ import { LoanTemplatesService } from '../data/loan-templates.service';
 
 @Component({
   selector: 'app-loan-templates-page',
-  imports: [ReactiveFormsModule, CurrencyPipe, DatePipe],
+  imports: [EditorDialogComponent, ReactiveFormsModule, CurrencyPipe, DatePipe],
   templateUrl: './loan-templates.page.html',
   styleUrl: './loan-templates.page.scss',
 })
 export class LoanTemplatesPage {
+  readonly editorOpen = signal(false);
+  readonly editorLoading = signal(false);
+  readonly editorLoadFailed = signal(false);
+  private editVersion = 0;
+  private readonly destroyRef = inject(DestroyRef);
+  openCreate(): void {
+    if (this.saving()) return;
+    this.reset(); this.error.set(''); this.success.set(''); this.editorOpen.set(true);
+  }
+  closeEditor(): void {
+    if (this.saving()) return;
+    this.reset(); this.error.set('');
+  }
   private readonly templatesService = inject(LoanTemplatesService);
   private readonly routesService = inject(RoutesService);
   readonly routes = signal<readonly CollectionRoute[]>([]);
@@ -39,9 +53,16 @@ export class LoanTemplatesPage {
   constructor() { void this.load(); }
 
   async edit(template: LoanTemplate): Promise<void> {
+    if (this.saving()) return;
+    this.reset();
+    const version = ++this.editVersion;
+    this.editingId.set(template.id);
+    this.editorOpen.set(true); this.editorLoading.set(true);
+    this.success.set('');
     this.error.set('');
     try {
       const details = await this.templatesService.get(template.id);
+      if (version !== this.editVersion || this.destroyRef.destroyed) return;
       this.selected.set(details);
       this.editingId.set(details.id);
       this.form.reset({
@@ -56,16 +77,16 @@ export class LoanTemplatesPage {
         maxPercentage: details.maxPercentage,
         routeIds: [...details.routeIds],
       });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
     } catch (error) {
-      this.error.set(this.message(error));
-    }
+      if (version === this.editVersion && !this.destroyRef.destroyed) { this.error.set(this.message(error)); this.editorLoadFailed.set(true); }
+    } finally { if (version === this.editVersion) this.editorLoading.set(false); }
   }
 
   cancelEdit(): void { this.reset(); }
 
   async submit(): Promise<void> {
-    if (this.form.invalid || this.saving()) {
+    if (this.form.invalid || this.saving() || this.editorLoading() || this.editorLoadFailed()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -104,6 +125,8 @@ export class LoanTemplatesPage {
   }
 
   private reset(): void {
+    this.editVersion++; this.editorLoading.set(false); this.editorLoadFailed.set(false);
+    this.editorOpen.set(false);
     this.form.reset({ name: '', description: '', classification: 'Low', status: 'Draft', maxLoanDays: 30, maxPrincipalAmount: null, minPrincipalAmount: null, minPercentage: null, maxPercentage: null, routeIds: [] });
     this.editingId.set(null);
     this.selected.set(null);

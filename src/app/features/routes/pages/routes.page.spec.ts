@@ -20,6 +20,10 @@ describe('RoutesPage', () => {
     update: vi.fn().mockResolvedValue(undefined),
   };
 
+  beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute('open'); } });
+  });
   beforeEach(async () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -50,5 +54,28 @@ describe('RoutesPage', () => {
     expect(service.update).toHaveBeenCalledWith('route-1', expect.objectContaining({
       supervisorUserId: 'supervisor-1', collectorUserIds: ['collector-1'], status: 'Active',
     }));
+  });
+  it('opens a route from its card, cancels without saving and starts a clean new route', async () => {
+    const fixture = TestBed.createComponent(RoutesPage); await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('form')).toBeNull();
+    root.querySelector<HTMLElement>('article')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await fixture.whenStable();
+    expect(root.querySelector('dialog[open]')).toBeTruthy();
+    expect(fixture.componentInstance.form.controls.name.value).toBe('Centro');
+    fixture.componentInstance.closeEditor(); await fixture.whenStable();
+    expect(root.querySelector('form')).toBeNull(); expect(service.update).not.toHaveBeenCalled();
+    root.querySelector<HTMLButtonElement>('.new-record')!.click(); await fixture.whenStable();
+    expect(fixture.componentInstance.editingRouteId()).toBeNull();
+    expect(fixture.componentInstance.selectedCollectorIds().size).toBe(0);
+  });
+  it('blocks closing and duplicate saves while the route request is pending', async () => {
+    const fixture = TestBed.createComponent(RoutesPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(page.routes()[0]);
+    let finish!: () => void;
+    service.update.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    const pending = page.submit(); page.closeEditor(); await page.submit();
+    expect(page.editorOpen()).toBe(true); expect(service.update).toHaveBeenCalledTimes(1);
+    finish(); await pending; expect(page.editorOpen()).toBe(false);
   });
 });
