@@ -20,6 +20,7 @@ export class CustomersPage {
   filterRouteId = '';
   searchTerm = '';
   editRouteId = '';
+  editIdentification = '';
   editStatus: CustomerStatus = 'Active';
 
   constructor() { void this.initialize(); }
@@ -33,7 +34,7 @@ export class CustomersPage {
 
   async inspect(customerId: string): Promise<void> {
     this.error.set(''); this.success.set('');
-    try { const customer = await this.customersService.get(customerId); this.selected.set(customer); this.editRouteId = customer.routeId; this.editStatus = customer.status; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    try { const customer = await this.customersService.get(customerId); this.selected.set(customer); this.editRouteId = customer.routeId; this.editIdentification = customer.identification; this.editStatus = customer.status; window.scrollTo({ top: 0, behavior: 'smooth' }); }
     catch (error) { this.error.set(error instanceof Error ? error.message : 'No fue posible consultar el cliente.'); }
   }
 
@@ -41,9 +42,14 @@ export class CustomersPage {
 
   async saveAssignment(): Promise<void> {
     const customer = this.selected();
-    if (!customer || !this.editRouteId) return;
+    if (!customer || !this.editRouteId || this.saving()) return;
+    const identification = this.editIdentification.trim();
+    if (!identification || identification.length > 64 || (identification === '0' && customer.identification !== '0')) {
+      this.error.set('Ingresa una identificación válida. El valor 0 solo se conserva en clientes antiguos.');
+      return;
+    }
     this.saving.set(true); this.error.set(''); this.success.set('');
-    const request: CustomerWriteRequest = { routeId: this.editRouteId, firstNames: customer.firstNames, lastNames: customer.lastNames,
+    const request: CustomerWriteRequest = { identification, routeId: this.editRouteId, firstNames: customer.firstNames, lastNames: customer.lastNames,
       businessOrWorkName: customer.businessOrWorkName, observations: customer.observations, status: this.editStatus,
       phones: customer.phones, locations: customer.locations };
     try { const updated = await this.customersService.update(customer.id, request); this.selected.set(updated); this.success.set('Asignación y estado actualizados.'); await this.search(); }
