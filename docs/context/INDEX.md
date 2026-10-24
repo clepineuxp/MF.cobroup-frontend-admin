@@ -2,6 +2,8 @@
 
 Aplicación administrativa Angular/PWA por tenant. Consume el backend admin y futuras consultas operativas versionadas. El servidor conserva la autoridad.
 
+- `/usuarios`: listado del equipo y creación de supervisores y colaboradores (`Collector`) del tenant activo. Alta de organización/dueño privada por script del backend admin; [contrato](../../../MS.Cobroup.BackendAdmin/docs/contracts/organization-provisioning-users-v1.md).
+
 - Fase 3: shell responsive, configuración organizacional y gestión tenant-safe de rutas/asignaciones/cupos sobre contratos reales. La identidad JWT está reabierta para revalidación.
 - Rol administrativo: `ADMIN`; supervisores y cobradores no reciben autoridad administrativa.
 - Offline: solo shell estático, sin respuestas autenticadas ni escrituras.

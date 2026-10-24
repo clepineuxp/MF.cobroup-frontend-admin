@@ -3,6 +3,12 @@ import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'usuarios',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/users/pages/users.page').then((module) => module.UsersPage),
+    title: 'Usuarios | COBROUP Administración',
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin-overview/pages/admin-overview.page').then((module) => module.AdminOverviewPage),

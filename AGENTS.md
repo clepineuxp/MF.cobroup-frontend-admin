@@ -3,9 +3,9 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.7.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
+- Maestro: `../cobroup.md/COBROUP.md` 1.11.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/fase-9-endurecimiento-despliegue`.
+- Rama activa: `feature/organizaciones-usuarios`, creada desde `origin/dev` por instrucción del usuario.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
@@ -276,3 +276,20 @@
 - Cambio: `.github/workflows/docker-ghcr.yml` ejecuta `npm test -- --watch=false`, usando el entorno jsdom ya disponible.
 - Validación: `node node_modules/@angular/cli/bin/ng.js test --watch=false` terminó con código 0; 39/39 pruebas y 14/14 suites aprobadas. Se invocó directamente el CLI porque npm no está disponible en el PATH de esta sesión; Node local v24.22.1, CI configurado con Node 22. `git diff --check` sin errores.
 - Git: rama `feature/visuals-theme`; cambios locales sin commit, push, merge, tag ni PR. Ejecución remota pendiente de publicar el cambio.
+
+### 2026-10-23 — Gestión del equipo de la organización
+
+- Solicitud: crear supervisores y colaboradores desde la aplicación administrativa, con organizaciones/administrador dueño aprovisionados por script privado. Colaborador equivale a Collector por confirmación del usuario.
+- Git: `feature/organizaciones-usuarios` creada desde origin/dev (914a227), según instrucción expresa. Sin cambios previos al iniciar este alcance. Commit autorizado: NO; sin push, merge, tag ni PR.
+- Normativa: maestro COBROUP 1.11.0, framework frontend 1.0 y contrato JWT vigente; backend mantiene el framework C# 2.0 y arquitectura hexagonal.
+- Cambios: feature users con servicio/modelos y pantalla lazy `/usuarios`, enlace de navegación, listado con rol/dueño/estado/teléfono/fecha, formulario Supervisor/Collector con contraseña inicial de 12–128 caracteres. Usa el tenant de sesión y header de consistencia para impedir alta en otro tenant si cambia la sesión durante el envío. Cancela consultas y limpia datos al cambiar de organización o destruir la vista; limpia contraseña tras enviar.
+- Validación: 46/46 pruebas Vitest en 16 suites; build de producción correcto sin advertencias de presupuesto. Ejecutados mediante CLI local de Angular con Node v24.22.1, por ausencia de npm en PATH. Pruebas nuevas cubren creación, errores, validación, roles y cambio de tenant; no se ejecutó E2E por ingress ni verificación visual en navegador.
+- Documentación: contexto enlaza el contrato de aprovisionamiento y usuarios del backend. Temas usan los tokens existentes; PWA y almacenamiento de tokens no cambiaron.
+- Pendiente de publicación: migración y nueva API del backend antes de habilitar el flujo desplegado; no se desplegó ni se crearon cuentas reales. Auditoría independiente no realizada.
+
+### 2026-10-23 — Autorización de commit de usuarios
+
+- Solicitud expresa: aplicar migraciones y hacer commit del alcance de organizaciones/usuarios.
+- BackendAdmin aplicó correctamente la migración de propiedad/contacto en la base de desarrollo `dev_cobroup_identity`; historial EF sin pendientes. No se desplegó la nueva UI ni se crearon cuentas reales.
+- Se conservan como evidencia las 46 pruebas frontend y build correctos registrados en la implementación; no hubo cambios funcionales posteriores.
+- Commit autorizado: SÍ, feature usuarios y documentación asociada. Sin autorización adicional de push, merge, tag ni PR.
