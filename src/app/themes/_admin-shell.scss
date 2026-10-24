@@ -1,0 +1,13 @@
+app-main-layout {
+  background: radial-gradient(ellipse at top right, var(--color-primary-soft), transparent 55%), var(--color-background);
+  .app-main-content { max-width: 84rem; }
+  .app-main-content :is(.panel, .card, .table-card, .directory, .workspace > form) { border-radius: 1.25rem; box-shadow: var(--shadow-raised); }
+  .app-main-content button { border-radius: 999px; transition: background .15s, box-shadow .15s; }
+  .app-main-content :is(input, select, textarea) { border-radius: .75rem; }
+  .app-main-content :is(button, a, input, select, textarea):focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+  .app-main-content .auth-card { border-radius: 1.5rem; box-shadow: var(--shadow-floating); background: linear-gradient(145deg, var(--color-surface), var(--color-primary-soft)); }
+  .app-main-content th { background: var(--color-surface-raised); color: var(--color-text-muted); }
+  .app-main-content tbody tr:hover { background: var(--color-primary-soft); }
+  .app-main-content .table-card { overflow-x: auto; }
+}
+
