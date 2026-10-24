@@ -19,7 +19,10 @@ export class UsersPage {
   readonly busy = signal(false);
   readonly error = signal('');
   readonly success = signal('');
+  readonly editing = signal<OrganizationUser | null>(null);
+  readonly editIsActive = signal(true);
   private loadVersion = 0;
+  private activeScope: string | null = null;
   private loadAbort: AbortController | null = null;
   private readonly destroyRef = inject(DestroyRef);
 
@@ -28,7 +31,7 @@ export class UsersPage {
     displayName: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(160), Validators.pattern(/\S/)] }),
     phoneNumber: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(7), Validators.maxLength(24), Validators.pattern(/^(?=(?:\D*\d){7})[+\d ()-]+$/)] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    role: new FormControl<ManagedUserRole>('Collector', { nonNullable: true, validators: [Validators.required] }),
+    role: new FormControl<'Admin' | ManagedUserRole>('Collector', { nonNullable: true, validators: [Validators.required] }),
   });
 
   constructor() {
@@ -39,7 +42,10 @@ export class UsersPage {
     });
     effect(() => {
       const context = this.context();
-      this.form.reset();
+      const scope = context ? `${context.userId}:${context.organizationId}:${context.role}` : '';
+      if (scope === this.activeScope) return;
+      this.activeScope = scope;
+      this.resetForm();
       this.success.set('');
       this.error.set('');
       this.users.set([]);
@@ -75,15 +81,21 @@ export class UsersPage {
     if (!context) return;
     const organizationId = context.organizationId;
     const input = this.form.getRawValue();
+    const editing = this.editing();
     this.busy.set(true);
     this.error.set('');
     this.success.set('');
     try {
-      const user = await this.service.create({ ...input, username: input.username.trim(),
-        displayName: input.displayName.trim(), phoneNumber: input.phoneNumber.trim() });
+      const trimmed = { ...input, username: input.username.trim(), displayName: input.displayName.trim(), phoneNumber: input.phoneNumber.trim() };
+      let user: OrganizationUser;
+      if (editing) user = await this.service.update(editing.id, { ...trimmed, isActive: this.editIsActive(), password: input.password || null });
+      else {
+        if (input.role !== 'Supervisor' && input.role !== 'Collector') return;
+        user = await this.service.create({ ...trimmed, role: input.role });
+      }
       if (this.destroyRef.destroyed || this.context()?.organizationId !== organizationId) return;
-      this.form.reset();
-      this.success.set(`Usuario ${user.username} creado. Ya puede ingresar a COBROUP con sus credenciales.`);
+      this.resetForm();
+      this.success.set(editing ? `Usuario ${user.username} actualizado correctamente.` : `Usuario ${user.username} creado. Ya puede ingresar a COBROUP con sus credenciales.`);
       await this.load(organizationId);
     } catch (error) {
       if (this.context()?.organizationId === organizationId)
@@ -93,6 +105,32 @@ export class UsersPage {
       this.busy.set(false);
     }
   }
+
+  canEdit(user: OrganizationUser): boolean { return user.role !== 'Admin' || user.id === this.context()?.userId; }
+
+  edit(user: OrganizationUser): void {
+    if (this.busy() || !this.canEdit(user)) return;
+    this.editing.set(user); this.editIsActive.set(user.isActive);
+    this.form.controls.role.enable();
+    this.form.controls.password.clearValidators();
+    this.form.controls.password.updateValueAndValidity();
+    this.form.reset({ username: user.username, displayName: user.displayName, phoneNumber: user.phoneNumber ?? '', role: user.role, password: '' });
+    if (user.role === 'Admin') this.form.controls.role.disable();
+    this.error.set(''); this.success.set('');
+    document.getElementById('user-display-name')?.focus();
+  }
+
+  cancelEdit(): void { if (!this.busy()) { this.resetForm(); this.error.set(''); } }
+
+  private resetForm(): void {
+    this.editing.set(null); this.editIsActive.set(true);
+    this.form.controls.role.enable();
+    this.form.controls.password.setValidators([Validators.required]);
+    this.form.controls.password.updateValueAndValidity();
+    this.form.reset();
+  }
+
+  setEditStatus(event: Event): void { this.editIsActive.set((event.target as HTMLSelectElement).value === 'true'); }
 
   roleLabel(user: OrganizationUser): string {
     return user.isOwner ? 'Administrador dueño' : user.role === 'Admin' ? 'Administrador'

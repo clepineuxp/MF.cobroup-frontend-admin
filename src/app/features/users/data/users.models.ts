@@ -16,3 +16,11 @@ export interface CreateUserRequest {
   readonly password: string;
   readonly role: ManagedUserRole;
 }
+export interface UpdateUserRequest {
+  readonly username: string;
+  readonly displayName: string;
+  readonly phoneNumber: string;
+  readonly role: 'Admin' | ManagedUserRole;
+  readonly isActive: boolean;
+  readonly password?: string | null;
+}
