@@ -1,12 +1,9 @@
-<section class="page-heading" aria-labelledby="routes-title">
-  <div><p class="eyebrow">Configuración operativa</p><h2 id="routes-title">Rutas de cobro</h2></div>
-  <p>Crea rutas dentro de la organización activa y asigna únicamente sus supervisores y cobradores.</p>
-</section>
+<div class="admin-records">
+<header class="records-heading" aria-labelledby="routes-title"><div><p class="records-eyebrow">CONFIGURACIÓN OPERATIVA</p><h2 id="routes-title">Rutas de cobro</h2><p class="records-description">Organiza tu equipo, recorridos y cupos de cobro.</p></div><button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva ruta</button></header>
 
 @if (error() && !editorOpen()) { <p class="message error" role="alert">{{ error() }}</p> }
 @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
 
-<button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva ruta</button>
 @if (editorOpen()) {
   <app-editor-dialog [title]="editingRouteId() ? 'Editar ruta' : 'Nueva ruta'" [busy]="saving()" [error]="error()" (dismiss)="closeEditor()">
     <form [formGroup]="form" (ngSubmit)="submit()">
@@ -45,20 +42,24 @@
     </form>
   </app-editor-dialog>
 }
-<p class="hint">Selecciona un registro para editarlo.</p>
 <div class="workspace">
   <section class="panel routes" aria-labelledby="route-list-title">
     <div class="list-heading"><h3 id="route-list-title">Rutas configuradas</h3><span>{{ routes().length }}</span></div>
     @if (loading()) { <p>Cargando rutas…</p> }
     @else if (routes().length === 0) { <p class="empty">Aún no hay rutas en esta organización.</p> }
+    <p class="records-hint">Selecciona una tarjeta para editar su configuración.</p>
+    <div class="record-grid">
     @for (route of routes(); track route.id) {
-      <article class="editable-record" role="button" tabindex="0" [attr.aria-label]="'Editar ruta ' + route.name" (click)="edit(route)" (keydown.enter)="edit(route)" (keydown.space)="$event.preventDefault(); edit(route)">
-        <div><h4>{{ route.name }}</h4><span class="status">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
-        @if (route.description) { <p>{{ route.description }}</p> }
-        <dl><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div></dl>
-        <dl><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
-        <p class="collectors">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> y {{ route.collectors.length - 1 }} más</span> }</p>
+      <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Editar ruta ' + route.name" (click)="edit(route)" (keydown.enter)="edit(route)" (keydown.space)="$event.preventDefault(); edit(route)">
+        <div class="record-top"><span class="record-icon" aria-hidden="true">↗</span><span class="record-state" [class.muted]="route.status !== 'Active'">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
+        <h4 class="record-title">{{ route.name }}</h4>
+        <p class="record-description">{{ route.description || 'Sin descripción' }}</p>
+        <dl class="record-metrics"><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
+        <div class="record-footer"><span class="record-team">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> +{{ route.collectors.length - 1 }}</span> }</span><span aria-hidden="true">↗</span></div>
       </article>
     }
+    </div>
   </section>
+</div>
+
 </div>

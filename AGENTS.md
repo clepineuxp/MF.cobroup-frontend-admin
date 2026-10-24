@@ -5,7 +5,7 @@
 - Producto: COBROUP; rol: frontend administrativo por organización.
 - Maestro: `../cobroup.md/COBROUP.md` 1.14.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/admin-editor-modals`, creada desde `dev` (703d9f0) según la instrucción vigente de trabajar en features desde dev.
+- Rama activa: `feature/admin-list-design`, creada desde `origin/dev` (6a555b0) según la instrucción vigente de trabajar en features desde dev.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
@@ -365,4 +365,21 @@
 
 - Solicitud expresa del usuario: hacer commits del alcance de modales de creación/edición para plantillas, rutas, usuarios y medios de pago, con pruebas y documentación asociadas.
 - Se conservan las verificaciones registradas, sin cambios funcionales posteriores. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
+
+
+
+### 2026-10-23 — Presentación de listados administrativos
+
+- Solicitud: mejorar los listados iniciales mostrados en capturas de clientes, plantillas y rutas.
+- Git: árbol limpio al iniciar; fetch de origin/dev y rama feature/admin-list-design desde 6a555b0, que ya contiene los modales. Sin commit, push, merge, PR ni despliegue solicitados para este nuevo alcance.
+- Cambios: cabeceras compactas y acción Nuevo junto al título; grids de tarjetas de ancho acotado, estados semánticos y jerarquía de nombre/descripción/métricas/pie. Rutas agrupa supervisor, cobradores y cupos. Plantillas destaca rango monetario, plazo, interés, versión y rutas; estados traducidos a español sin cambiar sus valores. Clientes agrupa identidad, ruta, teléfono y ubicación, con barra de filtros y contador de resultados. Sin contenedor blanco ancho vacío alrededor de pocas tarjetas.
+- Estilos: identidad centralizada en themes/_admin-lists.scss, tokens semánticos existentes y sombra de tarjeta. Definidos space-5, space-7 y color-border-strong, que clientes referenciaba sin definición y causaban espacios/bordes ausentes. Grids adaptables, nombres largos con wrap, foco visible redondeado y movimiento reducido. Valores monetarios conservan el pipe currency previo; sin nuevas dependencias, cambios de contrato, API, autenticación ni PWA.
+- Interacción: se conserva edición de rutas/plantillas por tarjeta/teclado y modales bajo demanda; clientes conserva búsqueda, inspección y reasignación existentes.
+- Validación: 10/10 pruebas existentes dirigidas de clientes, rutas y plantillas en 3 suites; build final productivo correcto, 321.73 kB iniciales, sin advertencias. CLI Angular local con Node v24.22.1; npm fuera del PATH. git diff --check correcto. No se añadieron pruebas que repliquen CSS.
+- Navegador: fixtures exclusivamente locales en 127.0.0.1:5863; revisión visual de rutas/plantillas/clientes y verificación de que la tarjeta de ruta abre su editor. Capturas de plantillas y clientes guardadas como artefactos locales. No se usaron datos reales ni se verificó en móvil instalado/ingress. Auditoría independiente no realizada.
+
+### 2026-10-23 — Commit autorizado de listados administrativos
+
+- Solicitud expresa del usuario: hacer commit de la mejora de listados de clientes, plantillas y rutas, incluyendo estilos, tokens y documentación asociada.
+- Se conservan las verificaciones registradas, sin nuevos cambios funcionales. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
 

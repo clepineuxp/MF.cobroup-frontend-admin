@@ -1,7 +1,6 @@
+<div class="admin-records">
 <section aria-labelledby="customers-title">
-  <div class="heading"><div><p class="eyebrow">Control administrativo</p><h2 id="customers-title">Clientes</h2></div><span class="count">{{ totalCount() }}</span></div>
-  <p>Consulta clientes de toda la organización, cambia su ruta y administra su estado sin duplicar datos en el servicio administrativo.</p>
-
+  <header class="records-heading"><div><p class="records-eyebrow">CONTROL ADMINISTRATIVO</p><h2 id="customers-title">Clientes</h2><p class="records-description">Consulta tu cartera y administra las rutas y el estado de tus clientes.</p></div><span class="records-total">{{ totalCount() }} {{ totalCount() === 1 ? 'cliente' : 'clientes' }}</span></header>
   @if (selected(); as customer) {
     <form class="detail" (ngSubmit)="saveAssignment()"><div class="heading"><div><h3>{{ customer.firstNames }} {{ customer.lastNames }}</h3><span>{{ customer.businessOrWorkName }}</span></div><button type="button" class="quiet" (click)="close()">Cerrar</button></div>
       <div class="fields"><label>Ruta activa<select name="editRoute" [(ngModel)]="editRouteId" required>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label><label>Estado<select name="editStatus" [(ngModel)]="editStatus"><option value="Active">Activo</option><option value="Inactive">Inactivo</option></select></label></div>
@@ -16,5 +15,20 @@
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
   @if (loading()) { <p>Cargando clientes…</p> }
   @else if (customers().length === 0) { <p class="empty">No existen clientes para los filtros actuales.</p> }
-  @else { <div class="grid">@for (customer of customers(); track customer.id) { <article><div class="heading"><div><h3>{{ customer.firstNames }} {{ customer.lastNames }}</h3><span>{{ routeName(customer.routeId) }}</span></div><span class="status" [class.inactive]="customer.status === 'Inactive'">{{ customer.status === 'Active' ? 'Activo' : 'Inactivo' }}</span></div><p>{{ customer.businessOrWorkName || 'Sin comercio o trabajo registrado' }}</p><dl><dt>Teléfono principal</dt><dd>{{ customer.primaryPhone }}</dd><dt>Ubicación</dt><dd>{{ customer.primaryLatitude }}, {{ customer.primaryLongitude }}</dd></dl><button type="button" class="quiet" (click)="inspect(customer.id)">Administrar</button></article> }</div> }
+  @else {
+    <p class="records-hint">Mostrando {{ customers().length }} de {{ totalCount() }} clientes</p>
+    <div class="record-grid">
+      @for (customer of customers(); track customer.id) {
+        <article class="record-card customer-record">
+          <div class="record-top"><span class="record-avatar" aria-hidden="true">{{ customer.firstNames.charAt(0) }}{{ customer.lastNames.charAt(0) }}</span><span class="record-state" [class.muted]="customer.status !== 'Active'">{{ customer.status === 'Active' ? 'Activo' : 'Inactivo' }}</span></div>
+          <div><h3 class="record-title">{{ customer.firstNames }} {{ customer.lastNames }}</h3><p class="record-route">{{ routeName(customer.routeId) }}</p></div>
+          <p class="record-description">{{ customer.businessOrWorkName || 'Sin comercio o trabajo registrado' }}</p>
+          <dl class="record-contacts"><div><dt>Teléfono principal</dt><dd>{{ customer.primaryPhone || 'Sin teléfono' }}</dd></div><div><dt>Ubicación principal</dt><dd>@if (customer.primaryLatitude != null && customer.primaryLongitude != null) { {{ customer.primaryLatitude }}, {{ customer.primaryLongitude }} } @else { Sin ubicación }</dd></div></dl>
+          <button type="button" class="record-open" (click)="inspect(customer.id)"><span>Administrar cliente</span><span aria-hidden="true">↗</span></button>
+        </article>
+      }
+    </div>
+  }
 </section>
+
+</div>

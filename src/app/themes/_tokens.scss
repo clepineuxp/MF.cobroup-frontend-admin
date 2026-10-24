@@ -19,3 +19,10 @@
   --color-on-notch: #ffffff;
 }
 :root[data-theme='dark'] { --color-notch: #ffffff; --color-on-notch: #0f172a; }
+
+:root {
+  --space-5: 1.25rem;
+  --space-7: 1.75rem;
+  --color-border-strong: color-mix(in srgb, var(--color-border), var(--color-text-muted) 25%);
+  --shadow-record: 0 4px 18px color-mix(in srgb, var(--color-text) 5%, transparent);
+}

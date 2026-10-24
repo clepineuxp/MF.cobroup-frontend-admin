@@ -1,12 +1,9 @@
-<section class="page-heading" aria-labelledby="templates-title">
-  <div><p class="eyebrow">Políticas de crédito</p><h2 id="templates-title">Plantillas de préstamo</h2></div>
-  <p>Define límites y porcentajes reutilizables. Cada modificación crea una versión y no altera préstamos existentes.</p>
-</section>
+<div class="admin-records">
+<header class="records-heading" aria-labelledby="templates-title"><div><p class="records-eyebrow">POLÍTICAS DE CRÉDITO</p><h2 id="templates-title">Plantillas de préstamo</h2><p class="records-description">Define las condiciones de crédito de tu organización.</p></div><button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva plantilla</button></header>
 
 @if (error() && !editorOpen()) { <p class="message error" role="alert">{{ error() }}</p> }
 @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
 
-<button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva plantilla</button>
 @if (editorOpen()) {
   <app-editor-dialog [title]="editingId() ? 'Editar plantilla' : 'Nueva plantilla'" [busy]="saving()" [error]="error()" (dismiss)="closeEditor()">
 @if (editorLoading()) { <p role="status">Cargando plantilla…</p> } @else if (editorLoadFailed()) { <p>Cierra el formulario y selecciona la plantilla para volver a intentar.</p> } @else {
@@ -41,20 +38,25 @@
 }
   </app-editor-dialog>
 }
-<p class="hint">Selecciona un registro para editarlo.</p>
 <div class="workspace">
   <section class="panel catalog" aria-labelledby="template-list-title">
     <div class="list-heading"><h3 id="template-list-title">Catálogo</h3><span>{{ templates().length }}</span></div>
     @if (loading()) { <p>Cargando plantillas…</p> }
     @else if (templates().length === 0) { <p class="empty">Aún no hay plantillas en esta organización.</p> }
+    <p class="records-hint">Selecciona una tarjeta para editar y consultar sus versiones.</p>
+    <div class="record-grid">
     @for (template of templates(); track template.id) {
-      <article class="editable-record" role="button" tabindex="0" [attr.aria-label]="'Editar plantilla ' + template.name" (click)="edit(template)" (keydown.enter)="edit(template)" (keydown.space)="$event.preventDefault(); edit(template)">
-        <div><h4>{{ template.name }}</h4><span class="status" [class.published]="template.status === 'Published'">{{ template.status }} · v{{ template.version }}</span></div>
-        @if (template.description) { <p>{{ template.description }}</p> }
-        <dl><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Rango de monto</dt><dd>{{ template.minPrincipalAmount | currency }} a {{ template.maxPrincipalAmount | currency }}</dd></div></dl>
-        <p>Porcentajes: <strong>{{ template.minPercentage }} % a {{ template.maxPercentage }} %</strong></p>
-        <p>Rutas asignadas: {{ template.routeIds.length }}</p>
+      <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Editar plantilla ' + template.name" (click)="edit(template)" (keydown.enter)="edit(template)" (keydown.space)="$event.preventDefault(); edit(template)">
+        <div class="record-top"><span class="record-icon" aria-hidden="true">▤</span><span class="record-state" [class.muted]="template.status !== 'Published'">{{ template.status === 'Published' ? 'Publicada' : template.status === 'Draft' ? 'Borrador' : 'Inactiva' }}</span></div>
+        <h4 class="record-title">{{ template.name }}</h4>
+        <p class="record-description">{{ template.description || 'Sin descripción' }}</p>
+        <div class="record-amount"><span>Rango de monto</span><strong>{{ template.minPrincipalAmount | currency }} <span>—</span> {{ template.maxPrincipalAmount | currency }}</strong></div>
+        <dl class="record-metrics"><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Interés</dt><dd>{{ template.minPercentage }} % – {{ template.maxPercentage }} %</dd></div></dl>
+        <div class="record-footer"><span>v{{ template.version }} · {{ template.routeIds.length }} {{ template.routeIds.length === 1 ? 'ruta asignada' : 'rutas asignadas' }}</span><span aria-hidden="true">↗</span></div>
       </article>
     }
+    </div>
   </section>
+</div>
+
 </div>

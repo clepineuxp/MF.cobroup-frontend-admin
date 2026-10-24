@@ -1,0 +1,49 @@
+.admin-records {
+  .records-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.75rem; }
+  .records-heading h2 { margin: .35rem 0 .6rem; font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -.04em; }
+  .records-eyebrow { margin: 0; font-size: .68rem; font-weight: 750; letter-spacing: .12em; color: var(--color-primary); }
+  .records-description { margin: 0; color: var(--color-text-muted); line-height: 1.6; max-width: 38rem; font-size: .9rem; }
+  .records-heading .new-record { flex-shrink: 0; margin: 0; }
+  .records-total { flex-shrink: 0; padding: .6rem 1rem; border-radius: 999px; color: var(--color-primary); background: var(--color-primary-soft); font-size: .85rem; font-weight: 700; }
+  .records-hint { margin: .5rem 0 1rem; font-size: .8rem; color: var(--color-text-muted); line-height: 1.5; }
+  .workspace > .panel { padding: 0; border: 0; background: transparent; box-shadow: none; }
+  .list-heading { margin-bottom: .5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); }
+  .list-heading h3 { font-size: 1rem; }
+  .list-heading > span { font-size: .8rem; background: var(--color-primary-soft); color: var(--color-primary); }
+  .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1rem; align-items: stretch; }
+  article.record-card { display: flex; flex-direction: column; gap: .9rem; min-width: 0; padding: 1.25rem; border: 1px solid var(--color-border); border-radius: 1rem; background: var(--color-surface); box-shadow: var(--shadow-record); transition: border-color .18s, box-shadow .18s; }
+  article.record-card.editable-record:hover { background: var(--color-surface); border-color: var(--color-primary); box-shadow: var(--shadow-raised); }
+  article.record-card.editable-record:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; border-radius: 1rem; }
+  .record-card .record-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .record-icon, .record-avatar { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: .8rem; background: var(--color-primary-soft); color: var(--color-primary); font-size: 1.3rem; font-weight: 700; flex-shrink: 0; }
+  .record-avatar { font-size: .85rem; text-transform: uppercase; border-radius: 50%; }
+  .record-card .record-state { display: inline-flex; align-items: center; gap: .35rem; color: var(--color-success); background: color-mix(in srgb, var(--color-success) 9%, var(--color-surface)); border-radius: 999px; padding: .35rem .6rem; font-size: .7rem; font-weight: 700; }
+  .record-state::before { content: ''; width: .35rem; height: .35rem; border-radius: 50%; background: currentColor; }
+  .record-card .record-state.muted { color: var(--color-text-muted); background: var(--color-surface-raised); }
+  .record-card .record-title { margin: 0; font-size: 1.05rem; letter-spacing: -.025em; line-height: 1.4; overflow-wrap: anywhere; }
+  .record-card .record-description { margin: 0; color: var(--color-text-muted); font-size: .83rem; line-height: 1.5; overflow-wrap: anywhere; }
+  .record-card .record-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: .25rem 0; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+  .record-card .record-metrics > div { min-width: 0; }
+  .record-card dt, .record-amount > span { color: var(--color-text-muted); font-size: .72rem; font-weight: 400; }
+  .record-card dd { margin: .35rem 0 0; font-size: .85rem; font-weight: 650; overflow-wrap: anywhere; }
+  .record-card .record-amount { display: grid; gap: .4rem; padding: .85rem; border-radius: .75rem; background: var(--color-surface-raised); }
+  .record-amount strong { font-size: .95rem; overflow-wrap: anywhere; line-height: 1.5; }
+  .record-amount strong span { color: var(--color-text-muted); font-weight: 400; }
+  .record-card .record-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-top: 1px solid var(--color-border); padding-top: .9rem; margin-top: auto; font-size: .75rem; color: var(--color-text-muted); }
+  .record-team { overflow-wrap: anywhere; }
+  .record-card .record-route { margin: .3rem 0 0; font-size: .78rem; color: var(--color-primary); font-weight: 600; }
+  .record-card .record-contacts { display: grid; grid-template-columns: 1fr; gap: .85rem; margin: 0; padding: 1rem 0; border-top: 1px solid var(--color-border); }
+  .record-card .record-open { display: flex; justify-content: space-between; gap: 1rem; width: 100%; margin-top: auto; padding: .75rem 1rem; background: var(--color-primary-soft); color: var(--color-primary); border: 0; border-radius: .75rem; font-size: .8rem; font-weight: 700; }
+  .filters { margin: 0 0 1.5rem; padding: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 1rem; box-shadow: var(--shadow-record); }
+  .filters input, .filters select { min-width: 0; box-sizing: border-box; }
+  .detail { gap: 1.25rem; }
+  .detail .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail .contact { padding: 1rem; background: var(--color-surface-raised); border-radius: .75rem; line-height: 1.6; font-size: .85rem; overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    .records-heading { align-items: flex-start; flex-direction: column; gap: 1rem; }
+    .workspace > .panel { padding: 0; }
+    .record-grid { grid-template-columns: minmax(0, 1fr); }
+    .filters, .detail .fields, .detail .contact { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) { article.record-card { transition: none; } }
+}

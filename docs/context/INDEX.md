@@ -30,3 +30,8 @@ Rama feature/update-pwa. Ambas aplicaciones notifican versiones descargadas con 
 ## Editores administrativos bajo demanda — 2026-10-23
 
 Rama feature/admin-editor-modals desde dev. Plantillas, rutas, usuarios y medios de pago usan un diálogo nativo compartido, instanciado solo al crear/editar. Nuevo abre formulario limpio, seleccionar registro abre edición; guardar cierra al tener éxito y los errores conservan el modal. Cierre limpia borrador, bloqueado durante guardado. Detalles y evidencias en AGENTS.md y [decisión de editores](../decisions/admin-editor-dialogs.md).
+
+
+## Listados administrativos — 2026-10-23
+
+Rama feature/admin-list-design desde origin/dev (6a555b0). Clientes, rutas y plantillas usan tarjetas compactas con datos agrupados, estados claros y grids adaptables. Cabeceras y filtros reorganizados; definidos los tokens de espacio/borde que faltaban en clientes. Edición, búsquedas y contratos existentes conservados. Estilos comunes en themes/_admin-lists.scss; validación y límites en AGENTS.md.
