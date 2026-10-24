@@ -293,3 +293,10 @@
 - BackendAdmin aplicó correctamente la migración de propiedad/contacto en la base de desarrollo `dev_cobroup_identity`; historial EF sin pendientes. No se desplegó la nueva UI ni se crearon cuentas reales.
 - Se conservan como evidencia las 46 pruebas frontend y build correctos registrados en la implementación; no hubo cambios funcionales posteriores.
 - Commit autorizado: SÍ, feature usuarios y documentación asociada. Sin autorización adicional de push, merge, tag ni PR.
+
+### 2026-10-23 — Contraseñas sin requisitos de longitud ni complejidad
+
+- Solicitud expresa: permitir contraseñas como `1` al crear usuarios.
+- Cambio: contraseña obligatoria y sin recortar; eliminados mínimos, máximos y reglas de composición del alta administrativa, validación Core compartida y script privado del dueño. Hash existente conservado.
+- Verificación: Core 66/66 y frontend administrativo 46/46, con casos de alta usando `1`; build productivo Angular correcto. No se probó contra servicios desplegados ni se crearon cuentas reales.
+- Rama feature/organizaciones-usuarios; commit autorizado por el usuario; sin push ni despliegue.

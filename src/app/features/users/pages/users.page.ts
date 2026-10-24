@@ -27,7 +27,7 @@ export class UsersPage {
     username: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(80), Validators.pattern(/\S/)] }),
     displayName: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(160), Validators.pattern(/\S/)] }),
     phoneNumber: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(7), Validators.maxLength(24), Validators.pattern(/^(?=(?:\D*\d){7})[+\d ()-]+$/)] }),
-    password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(12), Validators.maxLength(128), Validators.pattern(/\S/)] }),
+    password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     role: new FormControl<ManagedUserRole>('Collector', { nonNullable: true, validators: [Validators.required] }),
   });
 

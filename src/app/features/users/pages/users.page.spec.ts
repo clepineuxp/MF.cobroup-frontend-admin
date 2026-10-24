@@ -35,9 +35,9 @@ describe('UsersPage', () => {
     const fixture = TestBed.createComponent(UsersPage);
     await fixture.whenStable();
     const page = fixture.componentInstance;
-    page.form.setValue({ username: ' ana ', displayName: ' Ana ', phoneNumber: '+573001234567', password: 'private-password-test', role: 'Supervisor' });
+    page.form.setValue({ username: ' ana ', displayName: ' Ana ', phoneNumber: '+573001234567', password: '1', role: 'Supervisor' });
     await page.submit();
-    expect(service.create).toHaveBeenCalledWith({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: 'private-password-test', role: 'Supervisor' });
+    expect(service.create).toHaveBeenCalledWith({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: '1', role: 'Supervisor' });
     expect(page.form.controls.password.value).toBe('');
     expect(page.success()).toContain('ana');
   });

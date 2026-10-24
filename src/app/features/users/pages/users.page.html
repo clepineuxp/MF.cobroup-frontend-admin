@@ -27,8 +27,8 @@
             <option value="Supervisor">Supervisor</option>
           </select>
           <label for="user-password">Contraseña inicial</label>
-          <input id="user-password" type="password" formControlName="password" autocomplete="new-password" minlength="12" maxlength="128" required aria-describedby="password-help" />
-          <small id="password-help">Entre 12 y 128 caracteres. Entrégala al usuario por un medio privado.</small>
+          <input id="user-password" type="password" formControlName="password" autocomplete="new-password" required aria-describedby="password-help" />
+          <small id="password-help">Sin requisitos de longitud ni complejidad. Entrégala al usuario por un medio privado.</small>
           @if (form.invalid && form.touched) { <p class="error" role="alert">Completa todos los campos con datos válidos.</p> }
           <button type="submit" [disabled]="form.invalid || busy()">{{ busy() ? 'Creando…' : 'Crear usuario' }}</button>
         </fieldset>
