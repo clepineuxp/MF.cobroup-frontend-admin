@@ -1,10 +1,25 @@
-<section aria-labelledby="overview-title">
-  <p class="status">Fase 3 en curso</p>
-  <h2 id="overview-title">Panel administrativo</h2>
-  <p>El panel ya permite configurar rutas reales dentro de la organización activa, con supervisores y cobradores validados por la API.</p>
-  <ul>
-    <li><a href="/rutas">Administrar rutas de cobro</a> con aislamiento por organización.</li>
-    <li>Las lecturas operativas se obtendrán mediante contratos; nunca mediante escrituras cruzadas.</li>
-    <li>La PWA cachea únicamente recursos estáticos del shell.</li>
-  </ul>
+<section class="overview" aria-labelledby="overview-title">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">PANEL ADMINISTRATIVO · {{ context()?.organizationCode }}</p>
+      <h2 id="overview-title">Tu organización,<br>en un solo lugar.</h2>
+      <p class="intro">Conecta tu equipo, organiza las rutas y mantén el control de tu operación.</p>
+      <a class="hero-action" routerLink="/analitica">Explorar resultados <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="hero-symbol" aria-hidden="true">◈<span>COBRO UP</span></div>
+  </header>
+  <div class="section-heading"><h3>Tu operación</h3><span>Todo conectado</span></div>
+  <div class="module-grid">
+    @for (module of modules; track module.path) {
+      <a class="module-card" [routerLink]="module.path">
+        <span class="module-icon" aria-hidden="true">{{ module.icon }}</span>
+        <span class="module-title">{{ module.title }} <span aria-hidden="true">↗</span></span>
+        <span class="module-description">{{ module.description }}</span>
+      </a>
+    }
+  </div>
+  <section class="quick-settings" aria-label="Configuración de la organización">
+    <div><p class="eyebrow">A TU MEDIDA</p><h3>Las reglas de tu organización</h3></div>
+    <div class="quick-links"><a routerLink="/configuracion">Configuración →</a><a routerLink="/plantillas">Plantillas de crédito →</a><a routerLink="/excepciones">Excepciones →</a><a routerLink="/medios-pago">Medios de pago →</a></div>
+  </section>
 </section>
