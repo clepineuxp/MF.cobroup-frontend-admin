@@ -35,3 +35,8 @@ Rama feature/admin-editor-modals desde dev. Plantillas, rutas, usuarios y medios
 ## Listados administrativos — 2026-10-23
 
 Rama feature/admin-list-design desde origin/dev (6a555b0). Clientes, rutas y plantillas usan tarjetas compactas con datos agrupados, estados claros y grids adaptables. Cabeceras y filtros reorganizados; definidos los tokens de espacio/borde que faltaban en clientes. Edición, búsquedas y contratos existentes conservados. Estilos comunes en themes/_admin-lists.scss; validación y límites en AGENTS.md.
+
+
+## Identificación del cliente — 2026-10-24
+
+Decisión vigente: [identificación obligatoria y etiquetas](../../../cobroup.md/DECISION_IDENTIFICACION_CLIENTE.md). Identification viaja en alta, edición y lectura; sin default para nuevos. Migración operativa aplicada en Dev: 7 clientes anteriores con 0, sin pendientes. El modal invierte solo etiquetas Alias/Nombre completo, sin mover datos. Evidencias y despliegue coordinado en AGENTS.md.

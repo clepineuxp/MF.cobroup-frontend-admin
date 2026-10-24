@@ -3,9 +3,9 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.14.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
+- Maestro: `../cobroup.md/COBROUP.md` 1.15.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/logo-visuals-v2`, conservada para la actualización de identidad, iconografía y versión PWA.
+- Rama activa: `feature/customer-identification`, creada desde `origin/dev`; árbol limpio al iniciar.
 - Rama activa: `feature/admin-list-design`, creada desde `origin/dev` (6a555b0) según la instrucción vigente de trabajar en features desde dev.
 - Sin push, merge, tag ni PR sin autorización.
 
@@ -393,3 +393,24 @@
 - Solicitud expresa del usuario: hacer commit de la mejora de listados de clientes, plantillas y rutas, incluyendo estilos, tokens y documentación asociada.
 - Se conservan las verificaciones registradas, sin nuevos cambios funcionales. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
 
+
+
+### 2026-10-24 — Identificación obligatoria de clientes e intercambio visual de etiquetas
+
+- Solicitud expresa: invertir Alias/Nombre completo solo en interfaz y agregar identificación obligatoria, con 0 solo para clientes anteriores. Maestro 1.15.0, frameworks frontend 1.0 / C# 2.0 y JWT vigente.
+- Modelos de clientes incorporan identification requerido; el detalle permite consultar/corregir el valor, el listado lo presenta y las actualizaciones de ruta/estado lo incluyen sin pérdida de datos. Valida vacío, máximo 64 y reserva de 0 para el registro previamente identificado como 0.
+- BackendAdmin ya transporta JSON sin transformar el cuerpo; no necesitó cambios de código ni migración. Sus dos pruebas existentes del directorio HTTP se ejecutaron correctamente en solo lectura del repositorio.
+- Validación: suite completa 69/69 y, tras ampliar cobertura de identificación, 4/4 pruebas dirigidas de clientes (dos casos nuevos: 71 casos únicos entre ejecuciones). Build productivo correcto sin advertencias. No se desplegó UI ni se editaron cuentas/clientes reales desde administración.
+- Despliegue coordinado requerido: las versiones anteriores de API/formularios no envían identificación. Desplegar el backend operativo actualizado y ambos frontends juntos; la migración de Dev ya está aplicada. El servidor valida también las solicitudes directas y las reenviadas por BackendAdmin.
+- Git: sin commit, push, merge, PR ni despliegue solicitados para este alcance. Auditoría independiente no realizada. Decisión canónica: ../cobroup.md/DECISION_IDENTIFICACION_CLIENTE.md.
+
+### 2026-10-24 — Verificación de rama y destino de publicación
+
+- El usuario pidió validar que el trabajo y su publicación correspondan a la rama feature, al observar cambios enviados a dev.
+- Rama activa verificada: feature/customer-identification. Eliminado el seguimiento incorrecto de origin/dev. Configuración local: push.default=current, push.autoSetupRemote=true y branch.autoSetupMerge=false; futuros pushes por defecto usarán el mismo nombre de rama y nuevas features no heredarán origin/dev automáticamente.
+- La rama remota feature/customer-identification no existía al verificar; no se hizo push. Los commits permanecen locales. En documentación se creó esta rama desde la fundación local existente, conservando los cinco commits previos sin reset ni merge.
+
+### 2026-10-24 — Commit autorizado de identificación de clientes
+
+- Solicitud expresa del usuario: hacer commits del alcance de identificación obligatoria, intercambio visual de etiquetas, migración, pruebas y documentación.
+- Se conservan las verificaciones y la migración de Dev a 7 clientes. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
