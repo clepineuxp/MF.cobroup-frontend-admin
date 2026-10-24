@@ -9,7 +9,11 @@ export interface LoanTemplateVersion {
   readonly status: LoanTemplateStatus;
   readonly maxLoanDays: number;
   readonly maxPrincipalAmount: number;
-  readonly allowedPercentages: readonly number[];
+  readonly allowedPercentages?: readonly number[];
+  readonly minPrincipalAmount: number;
+  readonly minPercentage: number;
+  readonly maxPercentage: number;
+  readonly routeIds: readonly string[];
   readonly recordedByUserId: string;
   readonly recordedAtUtc: string;
 }
@@ -23,7 +27,11 @@ export interface LoanTemplate {
   readonly version: number;
   readonly maxLoanDays: number;
   readonly maxPrincipalAmount: number;
-  readonly allowedPercentages: readonly number[];
+  readonly allowedPercentages?: readonly number[];
+  readonly minPrincipalAmount: number;
+  readonly minPercentage: number;
+  readonly maxPercentage: number;
+  readonly routeIds: readonly string[];
   readonly versions?: readonly LoanTemplateVersion[];
   readonly updatedAtUtc: string;
 }
@@ -35,5 +43,9 @@ export interface LoanTemplateRequest {
   readonly status: LoanTemplateStatus;
   readonly maxLoanDays: number;
   readonly maxPrincipalAmount: number;
-  readonly allowedPercentages: readonly number[];
+  readonly allowedPercentages?: readonly number[];
+  readonly minPrincipalAmount: number;
+  readonly minPercentage: number;
+  readonly maxPercentage: number;
+  readonly routeIds: readonly string[];
 }

@@ -14,3 +14,7 @@ Aplicación administrativa Angular/PWA por tenant. Consume el backend admin y fu
 ## Registro de intervenciones
 
 - 2026-10-23: corregido el comando de pruebas de GitHub Actions para usar Vitest/jsdom sin `--browsers=ChromeHeadless`; 39/39 pruebas aprobadas mediante el CLI local. Detalle y limitaciones en `AGENTS.md`.
+
+## Plantillas por rangos y cobro mensual — 2026-10-23
+
+Decisión vigente: [rangos, rutas y mensual](../../../cobroup.md/DECISION_PLANTILLAS_RANGOS_RUTAS.md). Monto/porcentaje mínimo y máximo inclusivos; plantillas publicadas asignadas explícitamente a la ruta del cliente, con validación del servidor. Mensual conserva el día de inicio por meses calendario. Migración administrativa preparada y pendiente de aplicación; no modifica condiciones de préstamos existentes.

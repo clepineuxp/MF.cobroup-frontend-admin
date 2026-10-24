@@ -19,7 +19,17 @@
         <select formControlName="status"><option value="Draft">Borrador</option><option value="Published">Publicada</option><option value="Inactive">Inactiva</option></select>
       </label>
       <div class="fields"><label>Plazo máximo (días) <input type="number" min="1" max="3650" formControlName="maxLoanDays" /></label><label>Monto máximo <input type="number" min="0.0001" step="0.0001" formControlName="maxPrincipalAmount" /></label></div>
-      <label>Porcentajes permitidos <input formControlName="allowedPercentages" placeholder="5, 10, 12.5" autocomplete="off" /><small>Entre 1 y 20 valores positivos separados por coma.</small></label>
+      <label>Monto mínimo <input type="number" min="0.0001" step="0.0001" formControlName="minPrincipalAmount" /></label>
+      <div class="fields">
+        <label>Interés mínimo (%) <input type="number" min="0.0001" step="0.0001" formControlName="minPercentage" /></label>
+        <label>Interés máximo (%) <input type="number" min="0.0001" step="0.0001" formControlName="maxPercentage" /></label>
+      </div>
+      <label>Rutas habilitadas
+        <select multiple formControlName="routeIds" aria-describedby="routes-help">
+          @for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }
+        </select>
+        <small id="routes-help">Selecciona una o varias rutas. Sin rutas asignadas no estará disponible para prestar.</small>
+      </label>
       <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : editingId() ? 'Crear nueva versión' : 'Crear plantilla' }}</button>
     </form>
     @if (selected()?.versions?.length) {
@@ -35,8 +45,9 @@
       <article>
         <div><h4>{{ template.name }}</h4><span class="status" [class.published]="template.status === 'Published'">{{ template.status }} · v{{ template.version }}</span></div>
         @if (template.description) { <p>{{ template.description }}</p> }
-        <dl><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Monto máximo</dt><dd>{{ template.maxPrincipalAmount | currency }}</dd></div></dl>
-        <p>Porcentajes: <strong>{{ template.allowedPercentages.join(' %, ') }} %</strong></p>
+        <dl><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Rango de monto</dt><dd>{{ template.minPrincipalAmount | currency }} a {{ template.maxPrincipalAmount | currency }}</dd></div></dl>
+        <p>Porcentajes: <strong>{{ template.minPercentage }} % a {{ template.maxPercentage }} %</strong></p>
+        <p>Rutas asignadas: {{ template.routeIds.length }}</p>
         <button type="button" class="secondary" (click)="edit(template)">Editar y ver versiones</button>
       </article>
     }

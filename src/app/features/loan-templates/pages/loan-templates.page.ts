@@ -2,6 +2,8 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoanTemplate, LoanTemplateClassification, LoanTemplateRequest, LoanTemplateStatus } from '../data/loan-template.models';
+import { RoutesService } from '../../routes/data/routes.service';
+import { CollectionRoute } from '../../routes/data/route.models';
 import { LoanTemplatesService } from '../data/loan-templates.service';
 
 @Component({
@@ -12,6 +14,8 @@ import { LoanTemplatesService } from '../data/loan-templates.service';
 })
 export class LoanTemplatesPage {
   private readonly templatesService = inject(LoanTemplatesService);
+  private readonly routesService = inject(RoutesService);
+  readonly routes = signal<readonly CollectionRoute[]>([]);
   readonly templates = signal<readonly LoanTemplate[]>([]);
   readonly editingId = signal<string | null>(null);
   readonly selected = signal<LoanTemplate | null>(null);
@@ -26,7 +30,10 @@ export class LoanTemplatesPage {
     status: new FormControl<LoanTemplateStatus>('Draft', { nonNullable: true }),
     maxLoanDays: new FormControl(30, { nonNullable: true, validators: [Validators.required, Validators.min(1), Validators.max(3650)] }),
     maxPrincipalAmount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001)] }),
-    allowedPercentages: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    minPrincipalAmount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001)] }),
+    minPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001), Validators.max(99999.9999)] }),
+    maxPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001), Validators.max(99999.9999)] }),
+    routeIds: new FormControl<string[]>([], { nonNullable: true }),
   });
 
   constructor() { void this.load(); }
@@ -44,7 +51,10 @@ export class LoanTemplatesPage {
         status: details.status,
         maxLoanDays: details.maxLoanDays,
         maxPrincipalAmount: details.maxPrincipalAmount,
-        allowedPercentages: details.allowedPercentages.join(', '),
+        minPrincipalAmount: details.minPrincipalAmount,
+        minPercentage: details.minPercentage,
+        maxPercentage: details.maxPercentage,
+        routeIds: [...details.routeIds],
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -60,13 +70,11 @@ export class LoanTemplatesPage {
       return;
     }
 
-    const percentages = this.parsePercentages(this.form.controls.allowedPercentages.value);
-    if (!percentages) {
-      this.error.set('Ingresa entre 1 y 20 porcentajes positivos separados por coma.');
+    const value = this.form.getRawValue();
+    if (value.minPrincipalAmount! > value.maxPrincipalAmount! || value.minPercentage! > value.maxPercentage!) {
+      this.error.set('Los valores mínimos no pueden superar los máximos.');
       return;
     }
-
-    const value = this.form.getRawValue();
     const request: LoanTemplateRequest = {
       name: value.name.trim(),
       description: value.description.trim() || null,
@@ -74,7 +82,10 @@ export class LoanTemplatesPage {
       status: value.status,
       maxLoanDays: value.maxLoanDays,
       maxPrincipalAmount: value.maxPrincipalAmount!,
-      allowedPercentages: percentages,
+      minPrincipalAmount: value.minPrincipalAmount!,
+      minPercentage: value.minPercentage!,
+      maxPercentage: value.maxPercentage!,
+      routeIds: value.routeIds,
     };
 
     this.saving.set(true); this.error.set(''); this.success.set('');
@@ -92,22 +103,19 @@ export class LoanTemplatesPage {
     }
   }
 
-  private parsePercentages(raw: string): readonly number[] | null {
-    const values = [...new Set(raw.split(',').map((item) => Number(item.trim())))].sort((left, right) => left - right);
-    return values.length >= 1 && values.length <= 20 && values.every((value) => Number.isFinite(value) && value > 0 && value < 100000)
-      ? values
-      : null;
-  }
-
   private reset(): void {
-    this.form.reset({ name: '', description: '', classification: 'Low', status: 'Draft', maxLoanDays: 30, maxPrincipalAmount: null, allowedPercentages: '' });
+    this.form.reset({ name: '', description: '', classification: 'Low', status: 'Draft', maxLoanDays: 30, maxPrincipalAmount: null, minPrincipalAmount: null, minPercentage: null, maxPercentage: null, routeIds: [] });
     this.editingId.set(null);
     this.selected.set(null);
   }
 
   private async load(): Promise<void> {
     this.loading.set(true); this.error.set('');
-    try { this.templates.set(await this.templatesService.list()); }
+    try {
+      const [templates, routes] = await Promise.all([this.templatesService.list(), this.routesService.list()]);
+      this.templates.set(templates);
+      this.routes.set(routes.filter(route => route.status === 'Active'));
+    }
     catch (error) { this.error.set(this.message(error)); }
     finally { this.loading.set(false); }
   }
