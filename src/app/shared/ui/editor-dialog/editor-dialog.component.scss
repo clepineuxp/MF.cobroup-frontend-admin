@@ -1,0 +1,12 @@
+dialog { margin: auto; width: min(42rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; padding: clamp(1rem, 4vw, 2rem); background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 1.5rem; box-shadow: var(--shadow-floating); }
+dialog::backdrop { background: var(--color-overlay); backdrop-filter: blur(8px); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+header p { font-size: .65rem; font-weight: 700; letter-spacing: .1em; color: var(--color-text-muted); margin: 0 0 .5rem; }
+h3 { margin: 0; font-size: 1.4rem; letter-spacing: -.03em; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+footer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+button { padding: .7rem 1rem; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-raised); color: var(--color-text); font: inherit; cursor: pointer; }
+.close { width: 2.5rem; height: 2.5rem; padding: 0; flex-shrink: 0; }
+button:disabled { opacity: .6; cursor: wait; }
+button:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+.editor-error { padding: .75rem; border: 1px solid var(--color-danger); border-radius: .75rem; color: var(--color-danger); }

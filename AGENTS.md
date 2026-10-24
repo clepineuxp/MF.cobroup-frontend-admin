@@ -5,7 +5,7 @@
 - Producto: COBROUP; rol: frontend administrativo por organización.
 - Maestro: `../cobroup.md/COBROUP.md` 1.14.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/update-pwa`, existente y limpia al iniciar esta intervención; se conserva la rama feature elegida por el usuario.
+- Rama activa: `feature/admin-editor-modals`, creada desde `dev` (703d9f0) según la instrucción vigente de trabajar en features desde dev.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
@@ -348,4 +348,21 @@
 
 - Solicitud expresa del usuario: hacer los commits del alcance de actualización PWA, coherencia visual administrativa y header operativo, con pruebas y documentación asociadas.
 - Se conservan las verificaciones registradas; sin nuevos cambios funcionales. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
+
+
+
+### 2026-10-23 — Editores administrativos en modales bajo demanda
+
+- Solicitud: formularios de creación/edición de plantillas, rutas, usuarios y medios de pago abiertos únicamente al pulsar Nuevo o seleccionar el registro; retirar botones independientes de Editar.
+- Git: árbol limpio al iniciar; feature/admin-editor-modals creada desde dev (703d9f0, merge de actualización PWA). Maestro 1.14.0 y framework frontend 1.0. Sin commit, push, merge, PR ni despliegue solicitados para este nuevo alcance.
+- Implementación: componente genérico EditorDialogComponent con dialog nativo, título accesible, foco contenido/restaurado, Escape, fondo, Cancelar y cierre explícito; bloqueo del cierre y campos durante guardado, bloqueo de scroll de fondo. Instanciación condicional destruye formulario DOM al cerrar; apertura nueva limpia el borrador. Formularios de negocio conservados en sus features y servicios/contratos sin cambios.
+- Listas a ancho completo; tarjetas de rutas/plantillas activables por clic, Enter o Espacio. Filas de usuarios/medios de pago abren edición por clic; nombre es control accesible por teclado sin botón Editar separado. Acciones de estado de medios de pago detienen propagación y bloquean concurrencia. Restricción de edición de administradores conservada.
+- Guardado exitoso cierra el modal y refresca lista; errores mantienen borrador y se muestran dentro del modal. Contraseñas se limpian al cerrar/enviar y mantienen las reglas vigentes. Plantillas cargan detalles/historial dentro del modal; invalidación de respuesta tardía al cerrar/abrir otro registro, protección ante destrucción y bloqueo de formulario si falla la carga.
+- Verificación: suite completa 68/68 (19 suites); tras proteger fallo de carga, 5/5 pruebas dirigidas de plantillas y nuevo componente genérico, incluyendo una nueva prueba de foco/scroll/Escape/estado ocupado (69 casos únicos aprobados entre ambas ejecuciones). Build final productivo correcto sin advertencias. Node v24.22.1/CLI Angular local; npm no disponible en PATH. git diff --check correcto.
+- Navegador: fixtures locales en 127.0.0.1:5862, sin llamadas a datos reales. Apertura/cierre/limpieza de usuarios; rutas y plantillas por tarjeta, datos precargados y cierre con mensaje de éxito al guardar; medios de pago por fila, edición/guardado y alta vacía. Visual revisado con dialog nativo y scroll interno. No probado en dispositivo móvil instalado ni ingress; auditoría independiente no realizada.
+
+### 2026-10-23 — Commit autorizado de modales administrativos
+
+- Solicitud expresa del usuario: hacer commits del alcance de modales de creación/edición para plantillas, rutas, usuarios y medios de pago, con pruebas y documentación asociadas.
+- Se conservan las verificaciones registradas, sin cambios funcionales posteriores. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
 

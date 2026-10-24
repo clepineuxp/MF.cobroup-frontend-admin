@@ -1,3 +1,4 @@
+import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,11 +8,20 @@ import { UsersService } from '../data/users.service';
 
 @Component({
   selector: 'app-users-page',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [EditorDialogComponent, ReactiveFormsModule, DatePipe],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
 })
 export class UsersPage {
+  readonly editorOpen = signal(false);
+  openCreate(): void {
+    if (this.busy()) return;
+    this.resetForm(); this.error.set(''); this.success.set(''); this.editorOpen.set(true);
+  }
+  closeEditor(): void {
+    if (this.busy()) return;
+    this.resetForm(); this.error.set('');
+  }
   private readonly service = inject(UsersService);
   readonly context = inject(AuthService).context;
   readonly users = signal<readonly OrganizationUser[]>([]);
@@ -117,12 +127,13 @@ export class UsersPage {
     this.form.reset({ username: user.username, displayName: user.displayName, phoneNumber: user.phoneNumber ?? '', role: user.role, password: '' });
     if (user.role === 'Admin') this.form.controls.role.disable();
     this.error.set(''); this.success.set('');
-    document.getElementById('user-display-name')?.focus();
+    this.editorOpen.set(true);
   }
 
   cancelEdit(): void { if (!this.busy()) { this.resetForm(); this.error.set(''); } }
 
   private resetForm(): void {
+    this.editorOpen.set(false);
     this.editing.set(null); this.editIsActive.set(true);
     this.form.controls.role.enable();
     this.form.controls.password.setValidators([Validators.required]);

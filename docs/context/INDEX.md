@@ -25,3 +25,8 @@ Decisión vigente: [rangos, rutas y mensual](../../../cobroup.md/DECISION_PLANTI
 ## Actualización PWA y estilo administrativo — 2026-10-23
 
 Rama feature/update-pwa. Ambas aplicaciones notifican versiones descargadas con diálogo Actualizar ahora / Más tarde; recarga completa confirmada, búsqueda al estabilizar, cada 15 minutos, al recuperar foco/conexión y manual desde el panel superior. Sin caché de respuestas de negocio. Administración adopta navegación flotante, tarjetas y controles coherentes con operación; header operativo unido al borde al abrirse. Evidencias, pruebas y límites en AGENTS.md y [decisión de actualización](../../../cobroup.md/DECISION_ACTUALIZACION_PWA.md).
+
+
+## Editores administrativos bajo demanda — 2026-10-23
+
+Rama feature/admin-editor-modals desde dev. Plantillas, rutas, usuarios y medios de pago usan un diálogo nativo compartido, instanciado solo al crear/editar. Nuevo abre formulario limpio, seleccionar registro abre edición; guardar cierra al tener éxito y los errores conservan el modal. Cierre limpia borrador, bloqueado durante guardado. Detalles y evidencias en AGENTS.md y [decisión de editores](../decisions/admin-editor-dialogs.md).

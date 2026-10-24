@@ -13,6 +13,10 @@ describe('Admin PaymentMethodsPage', () => {
     toggleStatus: vi.fn(),
   };
 
+  beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute('open'); } });
+  });
   beforeEach(async () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -82,5 +86,25 @@ describe('Admin PaymentMethodsPage', () => {
     expect(paymentMethodsServiceMock.toggleStatus).toHaveBeenCalledWith('pm-2', true);
     const updated = component.items().find((i) => i.id === 'pm-2');
     expect(updated?.isActive).toBe(true);
+  });
+  it('opens editing from the row and keeps status actions independent', async () => {
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('dialog')).toBeNull();
+    root.querySelector<HTMLTableRowElement>('tbody tr')!.click(); await fixture.whenStable();
+    expect(component.editingItem()?.name).toBe('Efectivo'); expect(root.querySelector('dialog[open]')).toBeTruthy();
+    component.closeModal(); await fixture.whenStable();
+    root.querySelector<HTMLButtonElement>('tbody .btn-action')!.click(); await fixture.whenStable();
+    expect(paymentMethodsServiceMock.toggleStatus).toHaveBeenCalled(); expect(component.showModal()).toBe(false);
+  });
+  it('preserves errors and blocks cancel while submitting', async () => {
+    await fixture.whenStable(); component.openEdit(component.items()[0]);
+    let fail!: (error: Error) => void;
+    paymentMethodsServiceMock.update.mockImplementationOnce(() => new Promise((_, reject) => { fail = reject; }));
+    const pending = component.save(); component.closeModal();
+    expect(component.showModal()).toBe(true);
+    fail(new Error('Nombre duplicado')); await pending; await fixture.whenStable();
+    expect(component.showModal()).toBe(true);
+    expect(fixture.nativeElement.querySelector('dialog [role="alert"]').textContent).toContain('duplicado');
   });
 });

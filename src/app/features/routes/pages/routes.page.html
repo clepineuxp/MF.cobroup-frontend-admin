@@ -3,12 +3,12 @@
   <p>Crea rutas dentro de la organización activa y asigna únicamente sus supervisores y cobradores.</p>
 </section>
 
-@if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+@if (error() && !editorOpen()) { <p class="message error" role="alert">{{ error() }}</p> }
 @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
 
-<div class="workspace">
-  <section class="panel" aria-labelledby="new-route-title">
-    <div class="form-heading"><h3 id="new-route-title">{{ editingRouteId() ? 'Editar ruta' : 'Nueva ruta' }}</h3>@if (editingRouteId()) { <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button> }</div>
+<button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva ruta</button>
+@if (editorOpen()) {
+  <app-editor-dialog [title]="editingRouteId() ? 'Editar ruta' : 'Nueva ruta'" [busy]="saving()" [error]="error()" (dismiss)="closeEditor()">
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>Nombre <input formControlName="name" maxlength="120" autocomplete="off" /></label>
       <label>Descripción <textarea formControlName="description" maxlength="500" rows="3"></textarea></label>
@@ -43,20 +43,21 @@
       </fieldset>
       <button type="submit" [disabled]="saving() || supervisors().length === 0 || collectors().length === 0">{{ saving() ? 'Guardando…' : editingRouteId() ? 'Guardar cambios' : 'Crear ruta' }}</button>
     </form>
-  </section>
-
+  </app-editor-dialog>
+}
+<p class="hint">Selecciona un registro para editarlo.</p>
+<div class="workspace">
   <section class="panel routes" aria-labelledby="route-list-title">
     <div class="list-heading"><h3 id="route-list-title">Rutas configuradas</h3><span>{{ routes().length }}</span></div>
     @if (loading()) { <p>Cargando rutas…</p> }
     @else if (routes().length === 0) { <p class="empty">Aún no hay rutas en esta organización.</p> }
     @for (route of routes(); track route.id) {
-      <article>
+      <article class="editable-record" role="button" tabindex="0" [attr.aria-label]="'Editar ruta ' + route.name" (click)="edit(route)" (keydown.enter)="edit(route)" (keydown.space)="$event.preventDefault(); edit(route)">
         <div><h4>{{ route.name }}</h4><span class="status">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
         @if (route.description) { <p>{{ route.description }}</p> }
         <dl><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div></dl>
         <dl><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
         <p class="collectors">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> y {{ route.collectors.length - 1 }} más</span> }</p>
-        <button type="button" class="secondary edit" (click)="edit(route)">Editar configuración</button>
       </article>
     }
   </section>

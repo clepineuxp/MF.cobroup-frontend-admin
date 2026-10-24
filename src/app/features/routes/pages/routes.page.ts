@@ -1,3 +1,4 @@
+import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AssignableUser, CollectionRoute, RouteSettingMode, UpdateRouteRequest } from '../data/route.models';
@@ -5,11 +6,20 @@ import { RoutesService } from '../data/routes.service';
 
 @Component({
   selector: 'app-routes-page',
-  imports: [ReactiveFormsModule],
+  imports: [EditorDialogComponent, ReactiveFormsModule],
   templateUrl: './routes.page.html',
   styleUrl: './routes.page.scss',
 })
 export class RoutesPage {
+  readonly editorOpen = signal(false);
+  openCreate(): void {
+    if (this.saving()) return;
+    this.resetForm(); this.error.set(''); this.success.set(''); this.editorOpen.set(true);
+  }
+  closeEditor(): void {
+    if (this.saving()) return;
+    this.resetForm(); this.error.set('');
+  }
   private readonly routesService = inject(RoutesService);
   readonly routes = signal<readonly CollectionRoute[]>([]);
   readonly users = signal<readonly AssignableUser[]>([]);
@@ -41,6 +51,8 @@ export class RoutesPage {
   }
 
   edit(route: CollectionRoute): void {
+    if (this.saving()) return;
+    this.error.set(''); this.success.set('');
     this.editingRouteId.set(route.id);
     this.selectedCollectorIds.set(new Set(route.collectors.map((collector) => collector.id)));
     this.form.reset({
@@ -53,7 +65,7 @@ export class RoutesPage {
       maxActiveLoansMode: route.maxActiveLoans.mode,
       maxActiveLoansOverride: route.maxActiveLoans.overrideValue,
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.editorOpen.set(true);
   }
 
   cancelEdit(): void { this.resetForm(); }
@@ -99,6 +111,7 @@ export class RoutesPage {
   }
 
   private resetForm(): void {
+    this.editorOpen.set(false);
     this.form.reset({
       name: '', description: '', supervisorUserId: '', status: 'Active',
       maxActiveCustomersMode: 'Inherited', maxActiveCustomersOverride: null,

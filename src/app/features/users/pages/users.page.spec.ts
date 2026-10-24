@@ -13,6 +13,10 @@ describe('UsersPage', () => {
     phoneNumber: '+573001234567', isActive: true, isOwner: false, joinedAtUtc: '2026-10-23T12:00:00Z' };
   const admin: AuthContext = { userId: 'admin', organizationId: 'org-1', organizationCode: 'NORTE', username: 'admin', displayName: 'Admin', role: 'Admin' };
 
+  beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute('open'); } });
+  });
   beforeEach(async () => {
     vi.resetAllMocks();
     context.set(admin);
@@ -28,6 +32,7 @@ describe('UsersPage', () => {
     const fixture = TestBed.createComponent(UsersPage);
     await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Ana');
+    fixture.componentInstance.openCreate(); await fixture.whenStable();
     const options = [...fixture.nativeElement.querySelectorAll('option')].map((option: HTMLOptionElement) => option.value);
     expect(options).toEqual(['Collector', 'Supervisor']);
   });
@@ -111,5 +116,28 @@ describe('UsersPage', () => {
     const page = fixture.componentInstance; page.edit(user); page.form.controls.displayName.setValue('Unsaved name');
     context.set({ ...admin, displayName: 'Refreshed context' }); await fixture.whenStable();
     expect(page.editing()?.id).toBe(user.id); expect(page.form.controls.displayName.value).toBe('Unsaved name');
+  });
+  it('keeps the form absent until New or a row is selected and destroys it on cancel', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('form')).toBeNull();
+    root.querySelector<HTMLButtonElement>('.new-record')!.click(); await fixture.whenStable();
+    expect(root.querySelector('dialog[open]')).toBeTruthy();
+    fixture.componentInstance.form.controls.password.setValue('discard-me');
+    root.querySelector<HTMLButtonElement>('app-editor-dialog .close')!.click(); await fixture.whenStable();
+    expect(root.querySelector('form')).toBeNull(); expect(fixture.componentInstance.form.controls.password.value).toBe('');
+    root.querySelector<HTMLTableRowElement>('tbody tr')!.click(); await fixture.whenStable();
+    expect(fixture.componentInstance.editing()?.id).toBe(user.id);
+    expect(root.querySelector<HTMLInputElement>('[formControlName="username"]')!.value).toBe('ana');
+  });
+  it('keeps an unsuccessful save in the modal and closes it only after successful retry', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(user); await fixture.whenStable();
+    service.update.mockRejectedValueOnce(new Error('Conflicto al guardar'));
+    await page.submit(); await fixture.whenStable();
+    expect(page.editorOpen()).toBe(true);
+    expect(fixture.nativeElement.querySelector('dialog [role="alert"]').textContent).toContain('Conflicto');
+    await page.submit(); await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('dialog')).toBeNull();
   });
 });

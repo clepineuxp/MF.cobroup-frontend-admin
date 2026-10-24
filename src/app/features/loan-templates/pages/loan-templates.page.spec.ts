@@ -4,8 +4,12 @@ import { LoanTemplatesService } from '../data/loan-templates.service';
 import { RoutesService } from '../../routes/data/routes.service';
 
 describe('LoanTemplatesPage ranges and routes', () => {
-  const templates = { list: vi.fn().mockResolvedValue([]), create: vi.fn().mockResolvedValue(undefined), update: vi.fn() };
+  const templates = { list: vi.fn().mockResolvedValue([]), create: vi.fn().mockResolvedValue(undefined), update: vi.fn(), get: vi.fn() };
   const routes = { list: vi.fn().mockResolvedValue([{ id: 'r-1', name: 'Centro', status: 'Active' }]) };
+  beforeEach(() => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute('open'); } });
+  });
   beforeEach(async () => {
     vi.clearAllMocks();
     await TestBed.configureTestingModule({
@@ -38,9 +42,22 @@ describe('LoanTemplatesPage ranges and routes', () => {
     const fixture = TestBed.createComponent(LoanTemplatesPage);
     await fixture.whenStable();
     fixture.detectChanges();
+    fixture.componentInstance.openCreate(); await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('[formControlName="minPrincipalAmount"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[formControlName="minPercentage"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[formControlName="maxPercentage"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('select[multiple]').textContent).toContain('Centro');
+  });
+  it('does not resurrect an edit after closing while details are loading', async () => {
+    const fixture = TestBed.createComponent(LoanTemplatesPage); await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const item = { id: 't-1', name: 'Diario' } as Parameters<LoanTemplatesPage['edit']>[0];
+    let finish!: (value: typeof item) => void;
+    templates.get.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const pending = page.edit(item); await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('dialog').textContent).toContain('Cargando plantilla');
+    page.closeEditor(); page.openCreate(); finish(item); await pending; await fixture.whenStable();
+    expect(page.editingId()).toBeNull(); expect(page.form.controls.name.value).toBe('');
+    expect(page.editorLoading()).toBe(false);
   });
 });

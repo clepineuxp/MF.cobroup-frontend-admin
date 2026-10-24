@@ -10,7 +10,7 @@
     </button>
   </header>
 
-  @if (error()) {
+  @if (error() && !showModal()) {
     <div class="alert error" role="alert">
       <span>{{ error() }}</span>
     </div>
@@ -43,10 +43,10 @@
         </thead>
         <tbody>
           @for (item of items(); track item.id) {
-            <tr>
+            <tr class="editable-record" (click)="openEdit(item)">
               <td class="text-center order-col">#{{ item.displayOrder }}</td>
               <td class="name-col">
-                <strong>{{ item.name }}</strong>
+                <button type="button" class="record-link" [disabled]="submitting()" [attr.aria-label]="'Editar medio de pago ' + item.name">{{ item.name }}</button>
               </td>
               <td>
                 <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
@@ -59,12 +59,9 @@
                   type="button"
                   class="btn-action"
                   [ngClass]="item.isActive ? 'btn-deactivate' : 'btn-activate'"
-                  (click)="toggleStatus(item)"
+                  [disabled]="submitting()" (click)="$event.stopPropagation(); toggleStatus(item)"
                 >
                   {{ item.isActive ? 'Desactivar' : 'Activar' }}
-                </button>
-                <button type="button" class="btn-action btn-edit" (click)="openEdit(item)">
-                  Editar
                 </button>
               </td>
             </tr>
@@ -75,13 +72,7 @@
   </div>
 
   @if (showModal()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>{{ editingItem() ? 'Editar Medio de Pago' : 'Nuevo Medio de Pago' }}</h3>
-          <button type="button" class="btn-close" (click)="closeModal()">✕</button>
-        </div>
-
+    <app-editor-dialog [title]="editingItem() ? 'Editar medio de pago' : 'Nuevo medio de pago'" [busy]="submitting()" [error]="error()" (dismiss)="closeModal()">
         <form [formGroup]="form" (ngSubmit)="save()">
           <div class="form-group">
             <label for="methodName">Nombre del Medio de Pago *</label>
@@ -102,13 +93,11 @@
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
             <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
               {{ submitting() ? 'Guardando...' : 'Guardar Medio de Pago' }}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </app-editor-dialog>
   }
 </section>
