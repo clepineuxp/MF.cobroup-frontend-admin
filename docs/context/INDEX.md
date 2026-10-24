@@ -2,6 +2,8 @@
 
 Aplicación administrativa Angular/PWA por tenant. Consume el backend admin y futuras consultas operativas versionadas. El servidor conserva la autoridad.
 
+- Edición de usuarios: botón Editar en `/usuarios`, contraseña opcional, rol/estado local y controles del servidor para dueño, rutas y cuentas compartidas. [Decisión vigente](../../../cobroup.md/DECISION_UBICACION_CLIENTES_EDICION_USUARIOS.md).
+
 - `/usuarios`: listado del equipo y creación de supervisores y colaboradores (`Collector`) del tenant activo. Alta de organización/dueño privada por script del backend admin; [contrato](../../../MS.Cobroup.BackendAdmin/docs/contracts/organization-provisioning-users-v1.md).
 
 - Fase 3: shell responsive, configuración organizacional y gestión tenant-safe de rutas/asignaciones/cupos sobre contratos reales. La identidad JWT está reabierta para revalidación.

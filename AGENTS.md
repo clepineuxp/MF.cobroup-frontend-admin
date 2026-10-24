@@ -3,7 +3,7 @@
 ## Identidad y restricciones
 
 - Producto: COBROUP; rol: frontend administrativo por organización.
-- Maestro: `../cobroup.md/COBROUP.md` 1.11.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
+- Maestro: `../cobroup.md/COBROUP.md` 1.13.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
 - Rama activa: `feature/organizaciones-usuarios`, creada desde `origin/dev` por instrucción del usuario.
 - Sin push, merge, tag ni PR sin autorización.
@@ -316,3 +316,18 @@
 - Alcance: rangos de crédito, asignación a rutas, cuotas mensuales, migración y documentación; ambas interfaces incluyen la compatibilidad de importación de Leaflet del mapa.
 - Validación registrada: 278 pruebas aprobadas y compilaciones correctas; sin nuevos cambios funcionales posteriores.
 - Commit autorizado: SÍ. Sin push ni despliegue; migración administrativa pendiente de aplicación.
+
+### 2026-10-23 — Edición de usuarios desde administración
+
+- Solicitud: permitir modificar usuarios existentes en la plataforma administrativa, junto con mejoras de ubicación del frontend operativo.
+- Rama conservada: feature/organizaciones-usuarios (derivada de dev). Árbol limpio al inicio; cambios anteriores de plantillas/contraseñas preservados. Maestro 1.13.0, framework frontend 1.0 y contrato JWT vigente.
+- Cambios: Editar por fila en /usuarios, datos prellenados, rol y estado local, contraseña opcional (vacía conserva actual), guardar/cancelar y feedback seguro del servidor. Administrador solo edita su propio perfil administrativo. Se limpia el formulario al cambiar de tenant, pero se conservan ediciones al renovar token en la misma organización; errores conservan borrador sin contraseña. PUT usa header de consistencia de tenant.
+- Validación: suite completa 53/53 en 17 suites; tras agregar protección de borrador ante renovación de sesión se ejecutaron las 12 pruebas dirigidas de usuarios, todas aprobadas. Build final de producción correcto sin advertencias. Pruebas cubren edición, password null, cancelación, error, tenant y refresh sin perder cambios.
+- Backend valida permisos, cuentas compartidas, dueño y rutas; devuelve mensajes para conflictos. No se modificaron cuentas reales ni se ejecutó E2E por ingress. Sin nuevas dependencias ni cambios en caché/PWA.
+- Auditoría independiente no realizada. Commit autorizado: NO para esta solicitud; sin push ni despliegue.
+
+### 2026-10-23 — Commit autorizado de ubicación y edición de usuarios
+
+- Solicitud expresa del propietario: hacer commits del alcance implementado de GPS/mapa de clientes y edición administrativa de usuarios, con pruebas y documentación asociadas.
+- Se conservan las verificaciones y limitaciones registradas en la intervención anterior; sin nuevos cambios funcionales.
+- Commit autorizado: SÍ para este alcance. Sin push, merge, tag, PR ni despliegue.

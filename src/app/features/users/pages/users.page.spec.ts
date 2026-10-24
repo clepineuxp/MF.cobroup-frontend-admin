@@ -8,7 +8,7 @@ import { UsersPage } from './users.page';
 
 describe('UsersPage', () => {
   const context = signal<AuthContext | null>(null);
-  const service = { list: vi.fn(), create: vi.fn() };
+  const service = { list: vi.fn(), create: vi.fn(), update: vi.fn() };
   const user: OrganizationUser = { id: 'user-1', username: 'ana', displayName: 'Ana', role: 'Supervisor',
     phoneNumber: '+573001234567', isActive: true, isOwner: false, joinedAtUtc: '2026-10-23T12:00:00Z' };
   const admin: AuthContext = { userId: 'admin', organizationId: 'org-1', organizationCode: 'NORTE', username: 'admin', displayName: 'Admin', role: 'Admin' };
@@ -18,6 +18,7 @@ describe('UsersPage', () => {
     context.set(admin);
     service.list.mockResolvedValue([user]);
     service.create.mockResolvedValue(user);
+    service.update.mockResolvedValue({ ...user, displayName: 'Ana Actualizada' });
     await TestBed.configureTestingModule({ imports: [UsersPage], providers: [
       { provide: UsersService, useValue: service }, { provide: AuthService, useValue: { context } },
     ] }).compileComponents();
@@ -77,5 +78,38 @@ describe('UsersPage', () => {
     await fixture.whenStable();
     expect(fixture.componentInstance.users()).toEqual([]);
     expect(fixture.componentInstance.success()).toBe('');
+  });
+
+  it('edits existing users with an optional password and sends their active status', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(user);
+    expect(page.form.controls.password.value).toBe(''); expect(page.form.valid).toBe(true);
+    page.form.controls.displayName.setValue('Ana Actualizada');
+    await page.submit();
+    expect(service.create).not.toHaveBeenCalled();
+    expect(service.update).toHaveBeenCalledWith(user.id, expect.objectContaining({ displayName: 'Ana Actualizada', password: null, isActive: true }));
+    expect(page.success()).toContain('actualizado'); expect(page.editing()).toBeNull();
+  });
+
+  it('returns to creation mode on cancel and requires a new password again', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(user); page.cancelEdit();
+    expect(page.editing()).toBeNull(); expect(page.form.controls.password.invalid).toBe(true);
+    expect(page.form.controls.username.value).toBe('');
+  });
+
+  it('preserves editing data on an update error while clearing the password', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(user); page.form.controls.password.setValue('new-secret');
+    service.update.mockRejectedValueOnce(new Error('Reasigna primero las rutas activas.'));
+    await page.submit(); expect(page.error()).toContain('Reasigna');
+    expect(page.editing()?.id).toBe(user.id); expect(page.form.controls.password.value).toBe('');
+  });
+
+  it('preserves unsaved edits when tokens refresh within the same organization', async () => {
+    const fixture = TestBed.createComponent(UsersPage); await fixture.whenStable();
+    const page = fixture.componentInstance; page.edit(user); page.form.controls.displayName.setValue('Unsaved name');
+    context.set({ ...admin, displayName: 'Refreshed context' }); await fixture.whenStable();
+    expect(page.editing()?.id).toBe(user.id); expect(page.form.controls.displayName.value).toBe('Unsaved name');
   });
 });

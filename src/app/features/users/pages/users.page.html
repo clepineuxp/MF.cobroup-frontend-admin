@@ -2,7 +2,7 @@
   <header>
     <p class="eyebrow">Equipo de trabajo · {{ context()?.organizationCode }}</p>
     <h2 id="users-title">Usuarios de la organización</h2>
-    <p>Crea las cuentas de supervisores y colaboradores que trabajarán en tu organización.</p>
+    <p>Crea y modifica las cuentas de supervisores y colaboradores de tu organización.</p>
   </header>
   @if (context()?.role !== 'Admin') {
     <p role="alert">Solo un administrador puede gestionar los usuarios.</p>
@@ -11,7 +11,7 @@
     @if (success()) { <p class="success" role="status">{{ success() }}</p> }
     <div class="workspace">
       <form [formGroup]="form" (ngSubmit)="submit()" aria-labelledby="create-user-title">
-        <h3 id="create-user-title">Crear usuario</h3>
+        <h3 id="create-user-title">{{ editing() ? 'Editar usuario' : 'Crear usuario' }}</h3>
         <fieldset [disabled]="busy()">
           <label for="user-display-name">Nombre completo</label>
           <input id="user-display-name" formControlName="displayName" autocomplete="off" maxlength="160" required />
@@ -23,14 +23,22 @@
           <small id="phone-help">Al menos 7 dígitos. Puedes incluir el código de país.</small>
           <label for="user-role">Rol en esta organización</label>
           <select id="user-role" formControlName="role">
+            @if (editing()?.role === 'Admin') { <option value="Admin">Administrador</option> }
             <option value="Collector">Colaborador (cobrador)</option>
             <option value="Supervisor">Supervisor</option>
           </select>
-          <label for="user-password">Contraseña inicial</label>
-          <input id="user-password" type="password" formControlName="password" autocomplete="new-password" required aria-describedby="password-help" />
-          <small id="password-help">Sin requisitos de longitud ni complejidad. Entrégala al usuario por un medio privado.</small>
+          @if (editing()) {
+            <label for="user-active">Acceso en esta organización</label>
+            <select id="user-active" [value]="editIsActive()" (change)="setEditStatus($event)" [disabled]="busy() || editing()?.role === 'Admin'">
+              <option value="true">Activo</option><option value="false">Inactivo</option>
+            </select>
+          }
+          <label for="user-password">{{ editing() ? 'Nueva contraseña (opcional)' : 'Contraseña inicial' }}</label>
+          <input id="user-password" type="password" formControlName="password" autocomplete="new-password" [required]="!editing()" aria-describedby="password-help" />
+          <small id="password-help">{{ editing() ? 'Déjala vacía para conservar la contraseña actual.' : 'Sin requisitos de longitud ni complejidad. Entrégala por un medio privado.' }}</small>
           @if (form.invalid && form.touched) { <p class="error" role="alert">Completa todos los campos con datos válidos.</p> }
-          <button type="submit" [disabled]="form.invalid || busy()">{{ busy() ? 'Creando…' : 'Crear usuario' }}</button>
+          <button type="submit" [disabled]="form.invalid || busy()">{{ busy() ? 'Guardando…' : editing() ? 'Guardar cambios' : 'Crear usuario' }}</button>
+          @if (editing()) { <button type="button" class="secondary" (click)="cancelEdit()" [disabled]="busy()">Cancelar edición</button> }
         </fieldset>
       </form>
       <div class="directory" [attr.aria-busy]="loading()">
@@ -41,13 +49,14 @@
           <div class="table-scroll">
             <table>
               <caption class="sr-only">Usuarios de la organización activa</caption>
-              <thead><tr><th scope="col">Usuario</th><th scope="col">Rol</th><th scope="col">Teléfono</th><th scope="col">Estado</th><th scope="col">Ingreso</th></tr></thead>
+              <thead><tr><th scope="col">Usuario</th><th scope="col">Rol</th><th scope="col">Teléfono</th><th scope="col">Estado</th><th scope="col">Ingreso</th><th scope="col">Acciones</th></tr></thead>
               <tbody>
                 @for (user of users(); track user.id) {
                   <tr>
                     <td><strong>{{ user.displayName }}</strong><small>{{ user.username }}</small></td>
                     <td>{{ roleLabel(user) }}</td><td>{{ user.phoneNumber || 'Sin registrar' }}</td>
                     <td>{{ user.isActive ? 'Activo' : 'Inactivo' }}</td><td>{{ user.joinedAtUtc | date:'mediumDate' }}</td>
+                    <td>@if (canEdit(user)) { <button type="button" class="secondary" (click)="edit(user)" [disabled]="busy()" [attr.aria-label]="'Editar usuario ' + user.username">Editar</button> }</td>
                   </tr>
                 }
               </tbody>

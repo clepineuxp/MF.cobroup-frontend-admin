@@ -30,4 +30,13 @@ describe('UsersService', () => {
       .rejects.toThrow('El nombre de usuario no está disponible.');
     expect(authorizedFetch).toHaveBeenCalledTimes(1);
   });
+
+  it('updates the selected user and preserves the current password when omitted', async () => {
+    authorizedFetch.mockResolvedValue(new Response(JSON.stringify({ id: 'user-1', username: 'ana' }), { status: 200 }));
+    await TestBed.inject(UsersService).update('user-1', { username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', role: 'Collector', isActive: true, password: null });
+    const [url, options] = authorizedFetch.mock.calls[0];
+    expect(url).toBe('/identity/api/v1/users/user-1'); expect(options.method).toBe('PUT');
+    expect(options.headers['X-Cobroup-Expected-Organization']).toBe('org-1');
+    expect(JSON.parse(options.body).password).toBeNull();
+  });
 });
