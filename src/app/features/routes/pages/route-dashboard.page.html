@@ -1,0 +1,15 @@
+<div class="dashboard-page">
+  <a class="back" routerLink="/rutas">← Todas las rutas</a>
+  @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
+  @if (loading()) { <p>Cargando dashboard…</p> }
+  @if (route(); as route) {
+    <header><div><p class="eyebrow">DASHBOARD DE RUTA</p><h2>{{ route.name }}</h2><p>{{ route.description || 'Sin descripción' }}</p></div><a class="button secondary" routerLink="/rutas" [queryParams]="{ edit: route.id }">Editar configuración</a></header>
+    @if (balance(); as item) {
+      <section class="hero" [class.negative]="item.netBalance < 0"><span>Balance neto</span><strong>{{ item.netBalance | currency:'COP':'symbol-narrow':'1.0-2' }}</strong><p>Sin límites mínimos ni máximos.</p></section>
+      <section class="metrics"><article><span>Saldo inicial</span><strong>{{ item.initialBalance | currency:'COP':'symbol-narrow':'1.0-2' }}</strong></article><article><span>Capital prestado</span><strong>−{{ item.loanDisbursements | currency:'COP':'symbol-narrow':'1.0-2' }}</strong></article><article><span>Cobros</span><strong>+{{ item.paymentCollections | currency:'COP':'symbol-narrow':'1.0-2' }}</strong></article><article><span>Ingresos / inversiones</span><strong>+{{ item.incomeInvestments | currency:'COP':'symbol-narrow':'1.0-2' }}</strong></article><article><span>Gastos</span><strong>−{{ item.expenses | currency:'COP':'symbol-narrow':'1.0-2' }}</strong></article></section>
+    }
+    <section class="grid"><article class="panel"><h3>Equipo y capacidad</h3><dl><div><dt>Estado</dt><dd>{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</dd></div><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl></article>
+      <article class="panel actions"><h3>Gestión financiera</h3><a class="button" routerLink="/ingresos-inversiones" [queryParams]="{ routeId: route.id }">Ingresos e inversiones</a><a class="button" routerLink="/gastos" [queryParams]="{ routeId: route.id }">Gastos</a></article></section>
+    <section class="panel movements"><h3>Movimientos manuales recientes</h3>@if (entries().length === 0) { <p>No hay ingresos, inversiones o gastos registrados.</p> } @for (entry of entries(); track entry.id) { <div class="movement"><span><strong>{{ entry.concept }}</strong><small>{{ entry.createdAtUtc | date:'medium':'-0500' }} · {{ entry.createdByDisplayName }}</small></span><b [class.expense]="entry.type === 'Expense'">{{ entry.type === 'Expense' ? '−' : '+' }}{{ entry.amount | currency:'COP':'symbol-narrow':'1.0-2' }}</b></div> }</section>
+  }
+</div>

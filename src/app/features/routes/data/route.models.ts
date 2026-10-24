@@ -22,6 +22,7 @@ export interface CollectionRoute {
   readonly collectors: readonly RouteUser[];
   readonly maxActiveCustomers: RouteLimit;
   readonly maxActiveLoans: RouteLimit;
+  readonly initialBalance: number;
   readonly createdAtUtc: string;
   readonly updatedAtUtc: string;
 }
@@ -43,6 +44,7 @@ export interface CreateRouteRequest {
   readonly maxActiveCustomersOverride: number | null;
   readonly maxActiveLoansMode: RouteSettingMode;
   readonly maxActiveLoansOverride: number | null;
+  readonly initialBalance: number;
 }
 
 export interface UpdateRouteRequest extends CreateRouteRequest {

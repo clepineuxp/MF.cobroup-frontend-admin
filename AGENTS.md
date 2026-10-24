@@ -393,3 +393,11 @@
 - Solicitud expresa del usuario: hacer commit de la mejora de listados de clientes, plantillas y rutas, incluyendo estilos, tokens y documentación asociada.
 - Se conservan las verificaciones registradas, sin nuevos cambios funcionales. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
 
+### 2026-10-24 — Dashboard y gestión financiera administrativa por ruta
+
+- Creación de rutas: saldo inicial obligatorio; se permite cualquier valor y queda de solo lectura después del alta.
+- Selección de ruta: las tarjetas abren `/rutas/:routeId`, un dashboard con balance neto, saldo inicial, capital prestado, cobros, ingresos/inversiones, gastos, equipo, cupos y movimientos recientes.
+- Navegación: nuevas secciones `Ingresos / Inversiones` y `Gastos`, con filtro de ruta, alta e historial. Admin puede modificar movimientos históricos mediante el proxy administrativo.
+- Verificación: 71/71 pruebas Vitest en 21 suites y build productivo correcto sin warnings.
+- Git: cambios locales sin commit, push, merge, tag, PR ni despliegue.
+

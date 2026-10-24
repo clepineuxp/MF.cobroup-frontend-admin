@@ -21,6 +21,26 @@ export const routes: Routes = [
     title: 'Rutas | COBROUP Administración',
   },
   {
+    path: 'rutas/:routeId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/routes/pages/route-dashboard.page').then((module) => module.RouteDashboardPage),
+    title: 'Dashboard de ruta | COBROUP Administración',
+  },
+  {
+    path: 'ingresos-inversiones',
+    canActivate: [authGuard],
+    data: { section: 'income-investments' },
+    loadComponent: () => import('./features/route-finances/pages/route-finance.page').then((module) => module.RouteFinancePage),
+    title: 'Ingresos e inversiones | COBROUP Administración',
+  },
+  {
+    path: 'gastos',
+    canActivate: [authGuard],
+    data: { section: 'expenses' },
+    loadComponent: () => import('./features/route-finances/pages/route-finance.page').then((module) => module.RouteFinancePage),
+    title: 'Gastos | COBROUP Administración',
+  },
+  {
     path: 'plantillas',
     canActivate: [authGuard],
     loadComponent: () => import('./features/loan-templates/pages/loan-templates.page').then((module) => module.LoanTemplatesPage),
