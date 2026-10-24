@@ -6,13 +6,13 @@
       <p class="intro">Conecta tu equipo, organiza las rutas y mantén el control de tu operación.</p>
       <a class="hero-action" routerLink="/analitica">Explorar resultados <span aria-hidden="true">↗</span></a>
     </div>
-    <div class="hero-symbol" aria-hidden="true">◈<span>COBRO UP</span></div>
+    <div class="hero-symbol"><img src="brand/cobroup-logo.svg" alt="COBROUP" /></div>
   </header>
   <div class="section-heading"><h3>Tu operación</h3><span>Todo conectado</span></div>
   <div class="module-grid">
     @for (module of modules; track module.path) {
       <a class="module-card" [routerLink]="module.path">
-        <span class="module-icon" aria-hidden="true">{{ module.icon }}</span>
+        <span class="module-icon" aria-hidden="true"><app-icon [name]="module.icon" /></span>
         <span class="module-title">{{ module.title }} <span aria-hidden="true">↗</span></span>
         <span class="module-description">{{ module.description }}</span>
       </a>

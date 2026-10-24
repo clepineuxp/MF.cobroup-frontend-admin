@@ -5,7 +5,7 @@
 - Producto: COBROUP; rol: frontend administrativo por organización.
 - Maestro: `../cobroup.md/COBROUP.md` 1.14.0 y `../cobroup.md/DECISION_AUTENTICACION_JWT.md`.
 - Estándar: `../cobroup.md/FRAMEWORK_DESARROLLO_FRONTEND.md` 1.0.
-- Rama activa: `feature/admin-editor-modals`, creada desde `dev` (703d9f0) según la instrucción vigente de trabajar en features desde dev.
+- Rama activa: `feature/logo-visuals-v2`, conservada para la actualización de identidad, iconografía y versión PWA.
 - Sin push, merge, tag ni PR sin autorización.
 
 ## Estado actual
@@ -348,6 +348,15 @@
 
 - Solicitud expresa del usuario: hacer los commits del alcance de actualización PWA, coherencia visual administrativa y header operativo, con pruebas y documentación asociadas.
 - Se conservan las verificaciones registradas; sin nuevos cambios funcionales. Commit autorizado: SÍ. Sin push, merge, tag, PR ni despliegue.
+
+### 2026-10-24 — Identidad rombo, iconografía monocromática y versión PWA
+
+- Solicitud: unificar iconos de ambos frontends en escala de grises, convertir el rombo del Resumen en marca de aplicación, mostrarlo en títulos/PWA/login y reemplazar el estado permanente “Buscando actualización” por versión instalada y búsqueda manual sin perder la automática.
+- Marca: se crearon SVG accesibles `cobroup-mark.svg` y `cobroup-logo.svg`; Resumen, login, drawer, notch y favicon usan la misma geometría de rombos concéntricos. Los ocho PNG PWA (72–512 px) se regeneraron con zona segura y paleta `#405c72`/`#f4f6f8`.
+- Iconografía: navegación y tarjetas del Resumen reemplazaron emojis por SVG lineales reutilizables que heredan `currentColor`; los pictogramas decorativos restantes se normalizan a escala de grises sin alterar los indicadores semánticos rojo/amarillo/verde.
+- PWA: versión visible `1.14.0`, botón manual `Buscar actualizaciones` y estado transitorio `Consultando…`; continúan las comprobaciones automáticas al estabilizar, cada 15 minutos, con foco, visibilidad y reconexión. `ngsw.json` incluye `appData` con versión y aplicación.
+- Verificación: suite completa administrativa 69/69, prueba dirigida PWA 6/6 y build productivo correctos. Se comprobó en navegador el login administrativo con logo y marca en notch; el paquete final contiene SVG, PNG y appData.
+- Git: cambios preservados sin commit, push, merge, tag, PR ni despliegue para esta solicitud.
 
 
 
