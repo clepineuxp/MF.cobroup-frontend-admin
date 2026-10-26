@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AuditAction, AuditEntityType, FinancialMovementAuditLog } from '../data/route-finance.models';
@@ -26,7 +26,7 @@ const ACTION_CSS: Record<AuditAction, string> = {
 
 @Component({
   selector: 'app-audit-trace-page',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, DecimalPipe],
   templateUrl: './audit-trace.page.html',
   styleUrl: './audit-trace.page.scss',
 })
