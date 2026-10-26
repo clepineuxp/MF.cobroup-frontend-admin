@@ -39,6 +39,7 @@ export class RoutesPage {
     description: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(500)] }),
     supervisorUserId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     status: new FormControl<'Active' | 'Inactive'>('Active', { nonNullable: true }),
+    timeZoneId: new FormControl<string>('', { nonNullable: true }),
     maxActiveCustomersMode: new FormControl<RouteSettingMode>('Inherited', { nonNullable: true }),
     maxActiveCustomersOverride: new FormControl<number | null>(null, { validators: [Validators.min(1)] }),
     maxActiveLoansMode: new FormControl<RouteSettingMode>('Inherited', { nonNullable: true }),
@@ -64,6 +65,7 @@ export class RoutesPage {
       description: route.description ?? '',
       supervisorUserId: route.supervisor.id,
       status: route.status,
+      timeZoneId: route.timeZoneId ?? '',
       maxActiveCustomersMode: route.maxActiveCustomers.mode,
       maxActiveCustomersOverride: route.maxActiveCustomers.overrideValue,
       maxActiveLoansMode: route.maxActiveLoans.mode,
@@ -97,6 +99,7 @@ export class RoutesPage {
         supervisorUserId: value.supervisorUserId,
         collectorUserIds: [...this.selectedCollectorIds()],
         status: value.status,
+        timeZoneId: value.timeZoneId.trim() || null,
         maxActiveCustomersMode: value.maxActiveCustomersMode,
         maxActiveCustomersOverride: value.maxActiveCustomersMode === 'Overridden' ? value.maxActiveCustomersOverride : null,
         maxActiveLoansMode: value.maxActiveLoansMode,
@@ -120,6 +123,7 @@ export class RoutesPage {
     this.editorOpen.set(false);
     this.form.reset({
       name: '', description: '', supervisorUserId: '', status: 'Active',
+      timeZoneId: '',
       maxActiveCustomersMode: 'Inherited', maxActiveCustomersOverride: null,
       maxActiveLoansMode: 'Inherited', maxActiveLoansOverride: null,
       initialBalance: null,

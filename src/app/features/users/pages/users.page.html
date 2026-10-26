@@ -28,6 +28,12 @@
             <option value="Collector">Colaborador (cobrador)</option>
             <option value="Supervisor">Supervisor</option>
           </select>
+          @if (form.controls.role.value === 'Supervisor') {
+            <label class="check" style="margin-top:0.5rem">
+              <input type="checkbox" formControlName="canReopenDay" id="user-can-reopen-day" />
+              <span>Permitir reabrir día cerrado <small>El supervisor podrá desbloquear un día ya cerrado.</small></span>
+            </label>
+          }
           @if (editing()) {
             <label for="user-active">Acceso en esta organización</label>
             <select id="user-active" [value]="editIsActive()" (change)="setEditStatus($event)" [disabled]="busy() || editing()?.role === 'Admin'">
