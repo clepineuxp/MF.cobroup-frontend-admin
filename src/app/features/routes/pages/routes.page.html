@@ -9,6 +9,10 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>Nombre <input formControlName="name" maxlength="120" autocomplete="off" /></label>
       <label>Descripción <textarea formControlName="description" maxlength="500" rows="3"></textarea></label>
+      <label>Saldo inicial
+        <input type="number" step="0.01" formControlName="initialBalance" [readonly]="!!editingRouteId()" />
+        @if (editingRouteId()) { <small>El saldo inicial queda fijado al crear la ruta.</small> }
+      </label>
       <label>Supervisor
         <select formControlName="supervisorUserId">
           <option value="">Selecciona un supervisor</option>
@@ -47,14 +51,14 @@
     <div class="list-heading"><h3 id="route-list-title">Rutas configuradas</h3><span>{{ routes().length }}</span></div>
     @if (loading()) { <p>Cargando rutas…</p> }
     @else if (routes().length === 0) { <p class="empty">Aún no hay rutas en esta organización.</p> }
-    <p class="records-hint">Selecciona una tarjeta para editar su configuración.</p>
+    <p class="records-hint">Selecciona una tarjeta para abrir el dashboard de la ruta.</p>
     <div class="record-grid">
     @for (route of routes(); track route.id) {
-      <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Editar ruta ' + route.name" (click)="edit(route)" (keydown.enter)="edit(route)" (keydown.space)="$event.preventDefault(); edit(route)">
+      <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Abrir dashboard de ' + route.name" (click)="openDashboard(route)" (keydown.enter)="openDashboard(route)" (keydown.space)="$event.preventDefault(); openDashboard(route)">
         <div class="record-top"><span class="record-icon" aria-hidden="true">↗</span><span class="record-state" [class.muted]="route.status !== 'Active'">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
         <h4 class="record-title">{{ route.name }}</h4>
         <p class="record-description">{{ route.description || 'Sin descripción' }}</p>
-        <dl class="record-metrics"><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
+        <dl class="record-metrics"><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div><div><dt>Saldo inicial</dt><dd>{{ route.initialBalance }}</dd></div><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
         <div class="record-footer"><span class="record-team">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> +{{ route.collectors.length - 1 }}</span> }</span><span aria-hidden="true">↗</span></div>
       </article>
     }

@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AssignableUser, CollectionRoute, RouteSettingMode, UpdateRouteRequest } from '../data/route.models';
 import { RoutesService } from '../data/routes.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-routes-page',
@@ -21,6 +22,8 @@ export class RoutesPage {
     this.resetForm(); this.error.set('');
   }
   private readonly routesService = inject(RoutesService);
+  private readonly activatedRoute = inject(ActivatedRoute, { optional: true });
+  private readonly router = inject(Router, { optional: true });
   readonly routes = signal<readonly CollectionRoute[]>([]);
   readonly users = signal<readonly AssignableUser[]>([]);
   readonly selectedCollectorIds = signal<ReadonlySet<string>>(new Set());
@@ -40,6 +43,7 @@ export class RoutesPage {
     maxActiveCustomersOverride: new FormControl<number | null>(null, { validators: [Validators.min(1)] }),
     maxActiveLoansMode: new FormControl<RouteSettingMode>('Inherited', { nonNullable: true }),
     maxActiveLoansOverride: new FormControl<number | null>(null, { validators: [Validators.min(1)] }),
+    initialBalance: new FormControl<number | null>(null, { validators: [Validators.required] }),
   });
 
   constructor() { void this.load(); }
@@ -64,6 +68,7 @@ export class RoutesPage {
       maxActiveCustomersOverride: route.maxActiveCustomers.overrideValue,
       maxActiveLoansMode: route.maxActiveLoans.mode,
       maxActiveLoansOverride: route.maxActiveLoans.overrideValue,
+      initialBalance: route.initialBalance ?? 0,
     });
     this.editorOpen.set(true);
   }
@@ -96,6 +101,7 @@ export class RoutesPage {
         maxActiveCustomersOverride: value.maxActiveCustomersMode === 'Overridden' ? value.maxActiveCustomersOverride : null,
         maxActiveLoansMode: value.maxActiveLoansMode,
         maxActiveLoansOverride: value.maxActiveLoansMode === 'Overridden' ? value.maxActiveLoansOverride : null,
+        initialBalance: value.initialBalance ?? 0,
       };
       const editingRouteId = this.editingRouteId();
       if (editingRouteId) await this.routesService.update(editingRouteId, request);
@@ -116,6 +122,7 @@ export class RoutesPage {
       name: '', description: '', supervisorUserId: '', status: 'Active',
       maxActiveCustomersMode: 'Inherited', maxActiveCustomersOverride: null,
       maxActiveLoansMode: 'Inherited', maxActiveLoansOverride: null,
+      initialBalance: null,
     });
     this.selectedCollectorIds.set(new Set());
     this.editingRouteId.set(null);
@@ -129,10 +136,18 @@ export class RoutesPage {
         this.routesService.listAssignableUsers(),
       ]);
       this.routes.set(routes); this.users.set(users);
+      const editId = this.activatedRoute?.snapshot.queryParamMap.get('edit');
+      const requested = editId ? routes.find(route => route.id === editId) : undefined;
+      if (requested) this.edit(requested);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible cargar la administración de rutas.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  openDashboard(route: CollectionRoute): void {
+    if (this.router?.config.some(item => item.path === 'rutas/:routeId')) void this.router.navigate(['/rutas', route.id]);
+    else this.edit(route);
   }
 }
