@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AUTH_CONFIG } from '../../../core/auth/auth.config';
-import { RouteBalance, RouteFinanceSection, RouteFinancialEntry, SaveRouteFinancialEntryRequest } from './route-finance.models';
+import { FinancialMovementAuditLog, RouteBalance, RouteFinanceSection, RouteFinancialEntry, SaveRouteFinancialEntryRequest } from './route-finance.models';
 
 @Injectable({ providedIn: 'root' })
 export class RouteFinancesService {
@@ -17,6 +17,21 @@ export class RouteFinancesService {
   }
   async create(request: SaveRouteFinancialEntryRequest): Promise<RouteFinancialEntry> { return this.write(`${this.baseUrl}/entries`, 'POST', request); }
   async update(id: string, request: SaveRouteFinancialEntryRequest): Promise<RouteFinancialEntry> { return this.write(`${this.baseUrl}/entries/${id}`, 'PUT', request); }
+
+  async getAuditTrace(routeId?: string, fromDate?: string, toDate?: string): Promise<readonly FinancialMovementAuditLog[]> {
+    const params = new URLSearchParams();
+    if (routeId) params.set('routeId', routeId);
+    if (fromDate) params.set('fromTimestampUtc', new Date(fromDate).toISOString());
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      params.set('toTimestampUtc', to.toISOString());
+    }
+    return this.read<readonly FinancialMovementAuditLog[]>(
+      `${this.baseUrl}/audit-trace?${params.toString()}`,
+      'No fue posible consultar la traza de movimientos.'
+    );
+  }
 
   private async read<T>(url: string, message: string): Promise<T> {
     const response = await this.auth.authorizedFetch(url);

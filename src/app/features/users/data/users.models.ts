@@ -8,6 +8,7 @@ export interface OrganizationUser {
   readonly isActive: boolean;
   readonly isOwner: boolean;
   readonly joinedAtUtc: string;
+  readonly canReopenDay?: boolean;
 }
 export interface CreateUserRequest {
   readonly username: string;
@@ -15,6 +16,7 @@ export interface CreateUserRequest {
   readonly phoneNumber: string;
   readonly password: string;
   readonly role: ManagedUserRole;
+  readonly canReopenDay?: boolean;
 }
 export interface UpdateUserRequest {
   readonly username: string;
@@ -23,4 +25,5 @@ export interface UpdateUserRequest {
   readonly role: 'Admin' | ManagedUserRole;
   readonly isActive: boolean;
   readonly password?: string | null;
+  readonly canReopenDay?: boolean;
 }

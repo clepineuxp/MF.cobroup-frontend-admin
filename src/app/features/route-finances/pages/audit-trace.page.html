@@ -1,0 +1,73 @@
+<div class="audit-page">
+  <header class="audit-header">
+    <p class="eyebrow">AUDITORÍA OPERATIVA</p>
+    <h2 id="audit-title">Traza de movimientos</h2>
+    <p class="subtitle">Registro histórico de creaciones, modificaciones y eliminaciones de préstamos, cobros, ingresos y gastos. Visible solo para administradores.</p>
+  </header>
+
+  <form [formGroup]="filters" (ngSubmit)="search()" class="filter-bar" aria-label="Filtros de traza">
+    <label>
+      Ruta
+      <select formControlName="routeId" id="audit-route">
+        <option value="">Todas las rutas</option>
+        @for (route of routes(); track route.id) {
+          <option [value]="route.id">{{ route.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Desde
+      <input type="date" formControlName="fromDate" id="audit-from" />
+    </label>
+    <label>
+      Hasta
+      <input type="date" formControlName="toDate" id="audit-to" />
+    </label>
+    <button type="submit" [disabled]="loading()" id="audit-search-btn">
+      {{ loading() ? 'Buscando…' : 'Buscar' }}
+    </button>
+  </form>
+
+  @if (error()) {
+    <p class="message error" role="alert">{{ error() }}</p>
+  }
+
+  @if (!loading() && logs().length === 0 && !error()) {
+    <p class="empty">Aplica los filtros y presiona <strong>Buscar</strong> para consultar la traza de movimientos.</p>
+  }
+
+  @if (logs().length > 0) {
+    <p class="result-count" role="status">{{ logs().length }} registro{{ logs().length === 1 ? '' : 's' }} encontrado{{ logs().length === 1 ? '' : 's' }}</p>
+    <div class="table-scroll">
+      <table aria-label="Traza de movimientos financieros">
+        <thead>
+          <tr>
+            <th scope="col">Fecha/Hora (Local)</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Acción</th>
+            <th scope="col">Concepto</th>
+            <th scope="col">Monto</th>
+            <th scope="col">Detalles</th>
+            <th scope="col">Realizado por</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td class="timestamp">{{ log.localTimestamp | date:'dd/MM/yy, HH:mm:ss' }}</td>
+              <td><span class="entity-badge">{{ entityLabel(log.entityType) }}</span></td>
+              <td><span class="action-badge" [class]="actionCss(log.action)">{{ actionLabel(log.action) }}</span></td>
+              <td>{{ log.concept }}</td>
+              <td class="amount">{{ log.amount != null ? (log.amount | number:'1.0-2') : '—' }}</td>
+              <td class="details">{{ log.details || '—' }}</td>
+              <td>
+                <span class="actor-name">{{ log.performedByDisplayName }}</span>
+                <small class="actor-role">{{ log.performedByRole }}</small>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

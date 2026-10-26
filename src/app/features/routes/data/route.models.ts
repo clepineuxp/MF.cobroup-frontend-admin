@@ -23,6 +23,8 @@ export interface CollectionRoute {
   readonly maxActiveCustomers: RouteLimit;
   readonly maxActiveLoans: RouteLimit;
   readonly initialBalance: number;
+  readonly timeZoneId?: string | null;
+  readonly resolvedTimeZoneId?: string | null;
   readonly createdAtUtc: string;
   readonly updatedAtUtc: string;
 }
@@ -45,6 +47,7 @@ export interface CreateRouteRequest {
   readonly maxActiveLoansMode: RouteSettingMode;
   readonly maxActiveLoansOverride: number | null;
   readonly initialBalance: number;
+  readonly timeZoneId?: string | null;
 }
 
 export interface UpdateRouteRequest extends CreateRouteRequest {

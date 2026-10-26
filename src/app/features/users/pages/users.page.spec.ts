@@ -41,9 +41,9 @@ describe('UsersPage', () => {
     const fixture = TestBed.createComponent(UsersPage);
     await fixture.whenStable();
     const page = fixture.componentInstance;
-    page.form.setValue({ username: ' ana ', displayName: ' Ana ', phoneNumber: '+573001234567', password: '1', role: 'Supervisor' });
+    page.form.setValue({ username: ' ana ', displayName: ' Ana ', phoneNumber: '+573001234567', password: '1', role: 'Supervisor', canReopenDay: false });
     await page.submit();
-    expect(service.create).toHaveBeenCalledWith({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: '1', role: 'Supervisor' });
+    expect(service.create).toHaveBeenCalledWith({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: '1', role: 'Supervisor', canReopenDay: false });
     expect(page.form.controls.password.value).toBe('');
     expect(page.success()).toContain('ana');
   });
@@ -54,7 +54,7 @@ describe('UsersPage', () => {
     const page = fixture.componentInstance;
     await page.submit();
     expect(service.create).not.toHaveBeenCalled();
-    page.form.setValue({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: 'private-password-test', role: 'Collector' });
+    page.form.setValue({ username: 'ana', displayName: 'Ana', phoneNumber: '+573001234567', password: 'private-password-test', role: 'Collector', canReopenDay: false });
     service.create.mockRejectedValueOnce(new Error('El nombre de usuario no está disponible.'));
     await page.submit();
     expect(page.error()).toContain('no está disponible');

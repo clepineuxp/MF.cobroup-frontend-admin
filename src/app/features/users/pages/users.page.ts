@@ -42,6 +42,7 @@ export class UsersPage {
     phoneNumber: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(7), Validators.maxLength(24), Validators.pattern(/^(?=(?:\D*\d){7})[+\d ()-]+$/)] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     role: new FormControl<'Admin' | ManagedUserRole>('Collector', { nonNullable: true, validators: [Validators.required] }),
+    canReopenDay: new FormControl<boolean>(false, { nonNullable: true }),
   });
 
   constructor() {
@@ -98,10 +99,10 @@ export class UsersPage {
     try {
       const trimmed = { ...input, username: input.username.trim(), displayName: input.displayName.trim(), phoneNumber: input.phoneNumber.trim() };
       let user: OrganizationUser;
-      if (editing) user = await this.service.update(editing.id, { ...trimmed, isActive: this.editIsActive(), password: input.password || null });
+      if (editing) user = await this.service.update(editing.id, { ...trimmed, isActive: this.editIsActive(), password: input.password || null, canReopenDay: input.role === 'Supervisor' ? input.canReopenDay : undefined });
       else {
         if (input.role !== 'Supervisor' && input.role !== 'Collector') return;
-        user = await this.service.create({ ...trimmed, role: input.role });
+        user = await this.service.create({ ...trimmed, role: input.role, canReopenDay: input.role === 'Supervisor' ? input.canReopenDay : undefined });
       }
       if (this.destroyRef.destroyed || this.context()?.organizationId !== organizationId) return;
       this.resetForm();
@@ -124,7 +125,7 @@ export class UsersPage {
     this.form.controls.role.enable();
     this.form.controls.password.clearValidators();
     this.form.controls.password.updateValueAndValidity();
-    this.form.reset({ username: user.username, displayName: user.displayName, phoneNumber: user.phoneNumber ?? '', role: user.role, password: '' });
+    this.form.reset({ username: user.username, displayName: user.displayName, phoneNumber: user.phoneNumber ?? '', role: user.role, password: '', canReopenDay: user.canReopenDay ?? false });
     if (user.role === 'Admin') this.form.controls.role.disable();
     this.error.set(''); this.success.set('');
     this.editorOpen.set(true);
