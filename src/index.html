@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>COBROUP · Administración</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#405c72" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -22,5 +22,13 @@
   <body>
     <app-root></app-root>
     <noscript>Activa JavaScript para utilizar COBROUP Administración.</noscript>
+    <script>
+      // Prevenir gestos de zoom del navegador en pantallas táctiles / móviles
+      document.addEventListener('gesturestart', function (e) {
+        if (!e.target.closest || !e.target.closest('.leaflet-container')) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    </script>
   </body>
 </html>
