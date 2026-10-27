@@ -45,8 +45,8 @@ export class LoanTemplatesPage {
     maxLoanDays: new FormControl(30, { nonNullable: true, validators: [Validators.required, Validators.min(1), Validators.max(3650)] }),
     maxPrincipalAmount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001)] }),
     minPrincipalAmount: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001)] }),
-    minPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001), Validators.max(99999.9999)] }),
-    maxPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0.0001), Validators.max(99999.9999)] }),
+    minPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0), Validators.max(99999.9999)] }),
+    maxPercentage: new FormControl<number | null>(null, { validators: [Validators.required, Validators.min(0), Validators.max(99999.9999)] }),
     routeIds: new FormControl<string[]>([], { nonNullable: true }),
   });
 
@@ -86,26 +86,48 @@ export class LoanTemplatesPage {
   cancelEdit(): void { this.reset(); }
 
   async submit(): Promise<void> {
-    if (this.form.invalid || this.saving() || this.editorLoading() || this.editorLoadFailed()) {
+    if (this.saving() || this.editorLoading() || this.editorLoadFailed()) {
+      return;
+    }
+
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.error.set(this.getValidationErrorMessage());
       return;
     }
 
     const value = this.form.getRawValue();
-    if (value.minPrincipalAmount! > value.maxPrincipalAmount! || value.minPercentage! > value.maxPercentage!) {
+    if (value.minPrincipalAmount === null || value.maxPrincipalAmount === null) {
+      this.error.set('Los montos mínimo y máximo son requeridos.');
+      return;
+    }
+    if (value.minPrincipalAmount <= 0 || value.maxPrincipalAmount <= 0) {
+      this.error.set('Los montos principal deben ser mayores a 0.');
+      return;
+    }
+    if (value.minPercentage === null || value.maxPercentage === null) {
+      this.error.set('Los porcentajes de interés mínimo y máximo son requeridos.');
+      return;
+    }
+    if (value.minPercentage < 0 || value.maxPercentage < 0) {
+      this.error.set('Los porcentajes de interés no pueden ser negativos.');
+      return;
+    }
+    if (value.minPrincipalAmount > value.maxPrincipalAmount || value.minPercentage > value.maxPercentage) {
       this.error.set('Los valores mínimos no pueden superar los máximos.');
       return;
     }
+
     const request: LoanTemplateRequest = {
       name: value.name.trim(),
       description: value.description.trim() || null,
       classification: value.classification,
       status: value.status,
       maxLoanDays: value.maxLoanDays,
-      maxPrincipalAmount: value.maxPrincipalAmount!,
-      minPrincipalAmount: value.minPrincipalAmount!,
-      minPercentage: value.minPercentage!,
-      maxPercentage: value.maxPercentage!,
+      maxPrincipalAmount: value.maxPrincipalAmount,
+      minPrincipalAmount: value.minPrincipalAmount,
+      minPercentage: value.minPercentage,
+      maxPercentage: value.maxPercentage,
       routeIds: value.routeIds,
     };
 
@@ -122,6 +144,24 @@ export class LoanTemplatesPage {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private getValidationErrorMessage(): string {
+    const c = this.form.controls;
+    if (c.name.invalid) {
+      if (c.name.errors?.['required']) return 'El nombre de la plantilla es obligatorio.';
+      if (c.name.errors?.['maxlength']) return 'El nombre no puede superar los 120 caracteres.';
+    }
+    if (c.maxLoanDays.invalid) {
+      return 'El plazo máximo debe estar entre 1 y 3650 días.';
+    }
+    if (c.minPrincipalAmount.invalid || c.maxPrincipalAmount.invalid) {
+      return 'Los montos principal mínimo y máximo deben ser mayores a 0.';
+    }
+    if (c.minPercentage.invalid || c.maxPercentage.invalid) {
+      return 'El interés mínimo y máximo deben ser mayores o iguales a 0%.';
+    }
+    return 'Por favor completa todos los campos requeridos con valores válidos.';
   }
 
   private reset(): void {

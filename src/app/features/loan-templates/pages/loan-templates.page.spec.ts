@@ -60,4 +60,35 @@ describe('LoanTemplatesPage ranges and routes', () => {
     expect(page.editingId()).toBeNull(); expect(page.form.controls.name.value).toBe('');
     expect(page.editorLoading()).toBe(false);
   });
+  it('allows 0% minimum interest rate and submits successfully', async () => {
+    const fixture = TestBed.createComponent(LoanTemplatesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.form.setValue({ name: 'Tasa Cero', description: 'Sin interes', classification: 'Low', status: 'Published', maxLoanDays: 30,
+      minPrincipalAmount: 100000, maxPrincipalAmount: 500000, minPercentage: 0, maxPercentage: 0, routeIds: ['r-1'] });
+    await page.submit();
+    expect(templates.create).toHaveBeenCalledWith(expect.objectContaining({
+      minPercentage: 0, maxPercentage: 0,
+    }));
+    expect(page.error()).toBe('');
+  });
+  it('displays error message when service throws error on create', async () => {
+    templates.create.mockRejectedValueOnce(new Error('Ya existe una plantilla con este nombre.'));
+    const fixture = TestBed.createComponent(LoanTemplatesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.form.setValue({ name: 'Duplicado', description: '', classification: 'Low', status: 'Draft', maxLoanDays: 15,
+      minPrincipalAmount: 50000, maxPrincipalAmount: 200000, minPercentage: 5, maxPercentage: 10, routeIds: [] });
+    await page.submit();
+    expect(page.error()).toBe('Ya existe una plantilla con este nombre.');
+  });
+  it('displays validation error message when required fields are missing', async () => {
+    const fixture = TestBed.createComponent(LoanTemplatesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.form.controls.name.setValue('');
+    await page.submit();
+    expect(templates.create).not.toHaveBeenCalled();
+    expect(page.error()).toBeTruthy();
+  });
 });

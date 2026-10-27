@@ -35,7 +35,7 @@ export class LoanTemplatesService {
       body: JSON.stringify(request),
     });
     if (response.ok) return;
-    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null;
-    throw new Error(problem?.detail ?? problem?.message ?? 'No fue posible guardar la plantilla.');
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string; error?: string } | null;
+    throw new Error(problem?.message ?? problem?.detail ?? problem?.error ?? `Error al guardar la plantilla (${response.status}: ${response.statusText || 'Error en el servidor'}).`);
   }
 }

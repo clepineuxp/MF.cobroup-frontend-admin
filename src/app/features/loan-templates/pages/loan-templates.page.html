@@ -19,8 +19,8 @@
       <div class="fields"><label>Plazo máximo (días) <input type="number" min="1" max="3650" formControlName="maxLoanDays" /></label><label>Monto máximo <input type="number" min="0.0001" step="0.0001" formControlName="maxPrincipalAmount" /></label></div>
       <label>Monto mínimo <input type="number" min="0.0001" step="0.0001" formControlName="minPrincipalAmount" /></label>
       <div class="fields">
-        <label>Interés mínimo (%) <input type="number" min="0.0001" step="0.0001" formControlName="minPercentage" /></label>
-        <label>Interés máximo (%) <input type="number" min="0.0001" step="0.0001" formControlName="maxPercentage" /></label>
+        <label>Interés mínimo (%) <input type="number" min="0" step="0.0001" formControlName="minPercentage" /></label>
+        <label>Interés máximo (%) <input type="number" min="0" step="0.0001" formControlName="maxPercentage" /></label>
       </div>
       <label>Rutas habilitadas
         <select multiple formControlName="routeIds" aria-describedby="routes-help">
