@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
+  { path: 'autorizaciones-maquina', canActivate: [authGuard], loadComponent: () => import('./features/machine-auth/pages/machine-auth.page').then((module) => module.MachineAuthPage), title: 'Dispositivos autorizados | COBROUP' },
   {
     path: 'usuarios',
     canActivate: [authGuard],
