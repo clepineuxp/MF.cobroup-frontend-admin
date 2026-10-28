@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AUTH_CONFIG } from '../../../core/auth/auth.config';
 
-export interface PendingMachineOtp { readonly requestId: string; readonly routeId: string; readonly userId: string; readonly userDisplayName?: string; readonly machineId: string; readonly expiresAtUtc: string; }
+export interface PendingMachineOtp { readonly requestId: string; readonly routeId: string; readonly userId: string; readonly userDisplayName?: string; readonly machineId: string; readonly createdAtUtc: string; readonly expiresAtUtc: string; }
 export interface MachineAuthorization { readonly id: string; readonly routeId: string; readonly userId: string; readonly userDisplayName?: string; readonly machineId: string; readonly authorizedUntilUtc: string | null; readonly indefinite: boolean; readonly status: string; }
 @Injectable({ providedIn: 'root' })
 export class MachineAuthService {
