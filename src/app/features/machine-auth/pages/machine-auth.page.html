@@ -18,7 +18,7 @@
     </div>
     <label class="route-field">
       <span>Ruta a gestionar</span>
-      <select [(ngModel)]="routeId" (ngModelChange)="load()">
+      <select [(ngModel)]="routeId" (ngModelChange)="onRouteChange()">
         <option value="">Todas las rutas</option>
         @for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }
       </select>
@@ -62,7 +62,10 @@
                   <label>Días <input [(ngModel)]="days[item.requestId]" type="number" min="1" placeholder="30" [disabled]="indefinite[item.requestId]" /></label>
                 </div>
                 <label class="check-field"><input type="checkbox" [(ngModel)]="indefinite[item.requestId]" /> <span>Autorización indefinida</span></label>
-                <button class="primary-action" type="button" (click)="approve(item)" [disabled]="acting() === item.requestId || !otp[item.requestId]">{{ acting() === item.requestId ? 'Autorizando…' : 'Autorizar dispositivo' }}</button>
+                <div class="approval-actions">
+                  <button class="primary-action" type="button" (click)="approve(item)" [disabled]="acting() === item.requestId || !otp[item.requestId]">{{ acting() === item.requestId ? 'Autorizando…' : 'Autorizar dispositivo' }}</button>
+                  <button class="cancel-action" type="button" (click)="cancel(item)" [disabled]="acting() === item.requestId">{{ acting() === item.requestId ? 'Procesando…' : 'Cancelar OTP' }}</button>
+                </div>
               </div>
             </article>
           }
@@ -76,12 +79,21 @@
           <p class="section-kicker">ACCESO VIGENTE</p>
           <h2 id="authorized-title">Dispositivos autorizados</h2>
         </div>
-        <span class="counter">{{ authorizations().length }}</span>
+        <span class="counter">{{ authorizationTotal() }}</span>
       </div>
-      @if (!routeId) {
-        <div class="empty-state"><span class="empty-mark" aria-hidden="true">→</span><p>Selecciona una ruta para consultar sus dispositivos autorizados.</p></div>
-      } @else if (authorizations().length === 0) {
-        <div class="empty-state"><span class="empty-mark" aria-hidden="true">—</span><p>No hay dispositivos autorizados en esta ruta.</p></div>
+      <div class="authorized-filters" aria-label="Filtros de dispositivos autorizados">
+        <label>Tipo de usuario
+          <select [(ngModel)]="roleFilter" (ngModelChange)="onAuthorizationFilterChange()"><option value="all">Todos</option><option value="Collector">Cobradores</option><option value="Supervisor">Supervisores</option></select>
+        </label>
+        <label>Usuario
+          <select [(ngModel)]="userId" (ngModelChange)="onAuthorizationFilterChange()"><option value="">Todos los usuarios</option>@for (user of availableUsers(); track user.id) { <option [value]="user.id">{{ user.displayName }} · {{ user.role === 'Collector' ? 'Cobrador' : 'Supervisor' }}</option> }</select>
+        </label>
+        <label>Mostrar
+          <select [(ngModel)]="pageSize" (ngModelChange)="onAuthorizationFilterChange()"><option [ngValue]="10">10</option><option [ngValue]="20">20</option><option [ngValue]="30">30</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select>
+        </label>
+      </div>
+      @if (authorizations().length === 0) {
+        <div class="empty-state"><span class="empty-mark" aria-hidden="true">—</span><p>No hay dispositivos autorizados con los filtros actuales.</p></div>
       } @else {
         <div class="authorized-list">
           @for (item of authorizations(); track item.id) {
@@ -93,6 +105,11 @@
             </article>
           }
         </div>
+        <nav class="pagination" aria-label="Paginación de dispositivos autorizados">
+          <button class="page-action" type="button" (click)="previousPage()" [disabled]="page === 1">Anterior</button>
+          <span>Página <strong>{{ page }}</strong> de <strong>{{ totalPages() }}</strong></span>
+          <button class="page-action" type="button" (click)="nextPage()" [disabled]="page >= totalPages()">Siguiente</button>
+        </nav>
       }
     </section>
   }
