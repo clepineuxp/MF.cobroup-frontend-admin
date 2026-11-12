@@ -33,6 +33,16 @@ export class RouteFinancesService {
     );
   }
 
+  async reopenBox(routeId: string, businessDate?: string): Promise<{ reopened: boolean; message: string }> {
+    const query = businessDate ? `?businessDate=${encodeURIComponent(businessDate)}` : '';
+    const response = await this.auth.authorizedFetch(`${this.baseUrl}/${routeId}/reopen-box${query}`, { method: 'POST' });
+    if (!response.ok) {
+      const problem = await response.json().catch(() => null) as { message?: string } | null;
+      throw new Error(problem?.message ?? 'No fue posible reabrir la caja.');
+    }
+    return (await response.json()) as { reopened: boolean; message: string };
+  }
+
   private async read<T>(url: string, message: string): Promise<T> {
     const response = await this.auth.authorizedFetch(url);
     if (!response.ok) throw new Error(response.status === 503 ? 'El servicio financiero no está disponible temporalmente.' : message);

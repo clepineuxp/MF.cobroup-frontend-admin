@@ -3,6 +3,8 @@ export interface OrganizationSettings {
   readonly currencyCode: string;
   readonly maxActiveCustomersPerRoute: number | null;
   readonly maxActiveLoansPerRoute: number | null;
+  readonly dailyClosingTimeUtc?: string | null;
+  readonly enforceDailyClosingSchedule?: boolean;
   readonly updatedAtUtc: string;
 }
 
@@ -16,4 +18,6 @@ export interface UpdateOrganizationSettingsRequest {
   readonly currencyCode: string;
   readonly maxActiveCustomersPerRoute: number | null;
   readonly maxActiveLoansPerRoute: number | null;
+  readonly dailyClosingTimeUtc?: string | null;
+  readonly enforceDailyClosingSchedule?: boolean;
 }
