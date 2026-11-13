@@ -1,13 +1,16 @@
 import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
+import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AssignableUser, CollectionRoute, RouteSettingMode, UpdateRouteRequest } from '../data/route.models';
 import { RoutesService } from '../data/routes.service';
+import { LoanTemplatesService } from '../../loan-templates/data/loan-templates.service';
+import { LoanTemplate } from '../../loan-templates/data/loan-template.models';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-routes-page',
-  imports: [EditorDialogComponent, ReactiveFormsModule],
+  imports: [EditorDialogComponent, ReactiveFormsModule, CurrencyPipe],
   templateUrl: './routes.page.html',
   styleUrl: './routes.page.scss',
 })
@@ -22,11 +25,14 @@ export class RoutesPage {
     this.resetForm(); this.error.set('');
   }
   private readonly routesService = inject(RoutesService);
+  private readonly templatesService = inject(LoanTemplatesService, { optional: true });
   private readonly activatedRoute = inject(ActivatedRoute, { optional: true });
   private readonly router = inject(Router, { optional: true });
   readonly routes = signal<readonly CollectionRoute[]>([]);
   readonly users = signal<readonly AssignableUser[]>([]);
+  readonly templates = signal<readonly LoanTemplate[]>([]);
   readonly selectedCollectorIds = signal<ReadonlySet<string>>(new Set());
+  readonly selectedTemplateIds = signal<ReadonlySet<string>>(new Set());
   readonly editingRouteId = signal<string | null>(null);
   readonly supervisors = computed(() => this.users().filter((user) => user.role === 'Supervisor'));
   readonly collectors = computed(() => this.users().filter((user) => user.role === 'Collector'));
@@ -55,11 +61,31 @@ export class RoutesPage {
     this.selectedCollectorIds.set(selected);
   }
 
+  toggleTemplate(templateId: string, checked: boolean): void {
+    const set = new Set(this.selectedTemplateIds());
+    checked ? set.add(templateId) : set.delete(templateId);
+    this.selectedTemplateIds.set(set);
+  }
+
+  selectAllTemplates(): void {
+    this.selectedTemplateIds.set(new Set(this.templates().map(t => t.id)));
+  }
+
+  deselectAllTemplates(): void {
+    this.selectedTemplateIds.set(new Set());
+  }
+
+  getActiveTemplatesCount(routeId: string): number {
+    return this.templates().filter(t => t.routeIds.includes(routeId)).length;
+  }
+
   edit(route: CollectionRoute): void {
     if (this.saving()) return;
     this.error.set(''); this.success.set('');
     this.editingRouteId.set(route.id);
     this.selectedCollectorIds.set(new Set(route.collectors.map((collector) => collector.id)));
+    const activeIds = new Set(this.templates().filter(t => t.routeIds.includes(route.id)).map(t => t.id));
+    this.selectedTemplateIds.set(activeIds);
     this.form.reset({
       name: route.name,
       description: route.description ?? '',
@@ -105,13 +131,19 @@ export class RoutesPage {
         maxActiveLoansMode: value.maxActiveLoansMode,
         maxActiveLoansOverride: value.maxActiveLoansMode === 'Overridden' ? value.maxActiveLoansOverride : null,
         initialBalance: value.initialBalance ?? 0,
+        activeTemplateIds: [...this.selectedTemplateIds()],
       };
       const editingRouteId = this.editingRouteId();
       if (editingRouteId) await this.routesService.update(editingRouteId, request);
       else await this.routesService.create(request);
       this.success.set(editingRouteId ? 'Ruta actualizada correctamente.' : 'Ruta creada correctamente.');
       this.resetForm();
-      this.routes.set(await this.routesService.list());
+      const [updatedRoutes, updatedTemplates] = await Promise.all([
+        this.routesService.list(),
+        this.templatesService ? this.templatesService.list().catch(() => []) : Promise.resolve([]),
+      ]);
+      this.routes.set(updatedRoutes);
+      this.templates.set(updatedTemplates);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No fue posible crear la ruta.');
     } finally {
@@ -129,17 +161,21 @@ export class RoutesPage {
       initialBalance: null,
     });
     this.selectedCollectorIds.set(new Set());
+    this.selectedTemplateIds.set(new Set());
     this.editingRouteId.set(null);
   }
 
   private async load(): Promise<void> {
     this.loading.set(true); this.error.set('');
     try {
-      const [routes, users] = await Promise.all([
+      const [routes, users, templates] = await Promise.all([
         this.routesService.list(),
         this.routesService.listAssignableUsers(),
+        this.templatesService ? this.templatesService.list().catch(() => []) : Promise.resolve([]),
       ]);
-      this.routes.set(routes); this.users.set(users);
+      this.routes.set(routes);
+      this.users.set(users);
+      this.templates.set(templates);
       const editId = this.activatedRoute?.snapshot.queryParamMap.get('edit');
       const requested = editId ? routes.find(route => route.id === editId) : undefined;
       if (requested) this.edit(requested);

@@ -49,3 +49,17 @@ export interface LoanTemplateRequest {
   readonly maxPercentage: number;
   readonly routeIds: readonly string[];
 }
+
+export interface RouteLoanTemplateSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly classification: LoanTemplateClassification;
+  readonly status: LoanTemplateStatus;
+  readonly maxLoanDays: number;
+  readonly minPrincipalAmount: number;
+  readonly maxPrincipalAmount: number;
+  readonly minPercentage: number;
+  readonly maxPercentage: number;
+  readonly isActiveForRoute: boolean;
+}

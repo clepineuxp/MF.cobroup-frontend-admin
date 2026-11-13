@@ -1,5 +1,5 @@
 import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoanTemplate, LoanTemplateClassification, LoanTemplateRequest, LoanTemplateStatus } from '../data/loan-template.models';
@@ -9,7 +9,7 @@ import { LoanTemplatesService } from '../data/loan-templates.service';
 
 @Component({
   selector: 'app-loan-templates-page',
-  imports: [EditorDialogComponent, ReactiveFormsModule, CurrencyPipe, DatePipe],
+  imports: [EditorDialogComponent, ReactiveFormsModule, CurrencyPipe],
   templateUrl: './loan-templates.page.html',
   styleUrl: './loan-templates.page.scss',
 })
@@ -85,6 +85,33 @@ export class LoanTemplatesPage {
 
   cancelEdit(): void { this.reset(); }
 
+  getRouteSupervisor(route: CollectionRoute): string | null {
+    return (route as unknown as { supervisor?: { displayName?: string } }).supervisor?.displayName ?? null;
+  }
+
+  isRouteSelected(routeId: string): boolean {
+    return this.form.controls.routeIds.value.includes(routeId);
+  }
+
+  toggleRoute(routeId: string, checked: boolean): void {
+    const current = new Set(this.form.controls.routeIds.value);
+    if (checked) {
+      current.add(routeId);
+    } else {
+      current.delete(routeId);
+    }
+    this.form.controls.routeIds.setValue([...current]);
+  }
+
+  selectAllRoutes(): void {
+    const allIds = this.routes().map(route => route.id);
+    this.form.controls.routeIds.setValue(allIds);
+  }
+
+  deselectAllRoutes(): void {
+    this.form.controls.routeIds.setValue([]);
+  }
+
   async submit(): Promise<void> {
     if (this.saving() || this.editorLoading() || this.editorLoadFailed()) {
       return;
@@ -136,7 +163,7 @@ export class LoanTemplatesPage {
       const editingId = this.editingId();
       if (editingId) await this.templatesService.update(editingId, request);
       else await this.templatesService.create(request);
-      this.success.set(editingId ? 'Plantilla actualizada y nueva versión registrada.' : 'Plantilla creada correctamente.');
+      this.success.set(editingId ? 'Plantilla actualizada correctamente.' : 'Plantilla creada correctamente.');
       this.reset();
       this.templates.set(await this.templatesService.list());
     } catch (error) {

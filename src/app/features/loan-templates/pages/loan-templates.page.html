@@ -22,19 +22,37 @@
         <label>Interés mínimo (%) <input type="number" min="0" step="0.0001" formControlName="minPercentage" /></label>
         <label>Interés máximo (%) <input type="number" min="0" step="0.0001" formControlName="maxPercentage" /></label>
       </div>
-      <label>Rutas habilitadas
-        <select multiple formControlName="routeIds" aria-describedby="routes-help">
+      <div class="route-assignment-section">
+        <div class="route-assignment-header">
+          <label class="section-label">Rutas asignadas</label>
+          <div class="route-quick-actions">
+            <button type="button" class="btn-text" (click)="selectAllRoutes()" [disabled]="routes().length === 0">Todas</button>
+            <button type="button" class="btn-text" (click)="deselectAllRoutes()" [disabled]="form.controls.routeIds.value.length === 0">Ninguna</button>
+          </div>
+        </div>
+        <select multiple formControlName="routeIds" class="visually-hidden" aria-hidden="true" tabindex="-1">
           @for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }
         </select>
-        <small id="routes-help">Selecciona una o varias rutas. Sin rutas asignadas no estará disponible para prestar.</small>
-      </label>
-      <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : editingId() ? 'Crear nueva versión' : 'Crear plantilla' }}</button>
+        <div class="route-checkbox-list">
+          @if (routes().length === 0) {
+            <p class="no-routes-notice">No hay rutas activas disponibles en esta organización.</p>
+          }
+          @for (route of routes(); track route.id) {
+            <label class="route-check-item" [class.selected]="isRouteSelected(route.id)">
+              <input type="checkbox" [checked]="isRouteSelected(route.id)" (change)="toggleRoute(route.id, $any($event.target).checked)" />
+              <div class="route-item-body">
+                <span class="route-name">{{ route.name }}</span>
+                @if (getRouteSupervisor(route); as supervisor) {
+                  <span class="route-meta">{{ supervisor }}</span>
+                }
+              </div>
+            </label>
+          }
+        </div>
+        <small id="routes-help">Selecciona las rutas donde estará disponible esta plantilla para prestar.</small>
+      </div>
+      <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : editingId() ? 'Guardar cambios' : 'Crear plantilla' }}</button>
     </form>
-
-    @if (selected()?.versions?.length) {
-      <aside><h4>Historial</h4>@for (version of selected()!.versions!; track version.version) { <p><strong>v{{ version.version }}</strong> · {{ version.status }} · {{ version.recordedAtUtc | date:'medium' }}</p> }</aside>
-    }
-
 }
   </app-editor-dialog>
 }
@@ -43,7 +61,7 @@
     <div class="list-heading"><h3 id="template-list-title">Catálogo</h3><span>{{ templates().length }}</span></div>
     @if (loading()) { <p>Cargando plantillas…</p> }
     @else if (templates().length === 0) { <p class="empty">Aún no hay plantillas en esta organización.</p> }
-    <p class="records-hint">Selecciona una tarjeta para editar y consultar sus versiones.</p>
+    <p class="records-hint">Selecciona una tarjeta para editar sus datos y rutas asignadas.</p>
     <div class="record-grid">
     @for (template of templates(); track template.id) {
       <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Editar plantilla ' + template.name" (click)="edit(template)" (keydown.enter)="edit(template)" (keydown.space)="$event.preventDefault(); edit(template)">
@@ -52,7 +70,7 @@
         <p class="record-description">{{ template.description || 'Sin descripción' }}</p>
         <div class="record-amount"><span>Rango de monto</span><strong>{{ template.minPrincipalAmount | currency }} <span>—</span> {{ template.maxPrincipalAmount | currency }}</strong></div>
         <dl class="record-metrics"><div><dt>Plazo máximo</dt><dd>{{ template.maxLoanDays }} días</dd></div><div><dt>Interés</dt><dd>{{ template.minPercentage }} % – {{ template.maxPercentage }} %</dd></div></dl>
-        <div class="record-footer"><span>v{{ template.version }} · {{ template.routeIds.length }} {{ template.routeIds.length === 1 ? 'ruta asignada' : 'rutas asignadas' }}</span><span aria-hidden="true">↗</span></div>
+        <div class="record-footer"><span>{{ template.routeIds.length }} {{ template.routeIds.length === 1 ? 'ruta asignada' : 'rutas asignadas' }}</span><span aria-hidden="true">↗</span></div>
       </article>
     }
     </div>
