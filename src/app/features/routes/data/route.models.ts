@@ -48,6 +48,7 @@ export interface CreateRouteRequest {
   readonly maxActiveLoansOverride: number | null;
   readonly initialBalance: number;
   readonly timeZoneId?: string | null;
+  readonly activeTemplateIds?: readonly string[];
 }
 
 export interface UpdateRouteRequest extends CreateRouteRequest {

@@ -59,6 +59,39 @@
         </label>
         @if (form.controls.maxActiveLoansMode.value === 'Overridden') { <label>Límite de préstamos <input type="number" min="1" formControlName="maxActiveLoansOverride" /></label> }
       </fieldset>
+      <fieldset class="route-templates-fieldset">
+        <legend>Plantillas de crédito activas</legend>
+        <div class="templates-section-header">
+          <p class="templates-section-hint">Configura qué plantillas de crédito aplican a esta ruta.</p>
+          <div class="templates-actions">
+            <button type="button" class="btn-text" (click)="selectAllTemplates()" [disabled]="templates().length === 0">Todas</button>
+            <button type="button" class="btn-text" (click)="deselectAllTemplates()" [disabled]="selectedTemplateIds().size === 0">Ninguna</button>
+          </div>
+        </div>
+        @if (templates().length === 0) {
+          <p class="empty-templates-notice">Aún no hay plantillas creadas en esta organización.</p>
+        }
+        <div class="template-checkbox-list">
+          @for (template of templates(); track template.id) {
+            <label class="template-check-item" [class.selected]="selectedTemplateIds().has(template.id)">
+              <input type="checkbox" [checked]="selectedTemplateIds().has(template.id)" (change)="toggleTemplate(template.id, $any($event.target).checked)" />
+              <div class="template-info">
+                <div class="template-header-row">
+                  <span class="template-title">{{ template.name }}</span>
+                  <span class="template-badge" [class.badge-active]="template.status === 'Published'">{{ template.status === 'Published' ? 'Publicada' : template.status === 'Draft' ? 'Borrador' : 'Inactiva' }}</span>
+                </div>
+                <div class="template-specs">
+                  <span>{{ template.minPrincipalAmount | currency }} — {{ template.maxPrincipalAmount | currency }}</span>
+                  <span>·</span>
+                  <span>{{ template.minPercentage }}% – {{ template.maxPercentage }}%</span>
+                  <span>·</span>
+                  <span>{{ template.maxLoanDays }} días</span>
+                </div>
+              </div>
+            </label>
+          }
+        </div>
+      </fieldset>
       <button type="submit" [disabled]="saving() || supervisors().length === 0 || collectors().length === 0">{{ saving() ? 'Guardando…' : editingRouteId() ? 'Guardar cambios' : 'Crear ruta' }}</button>
     </form>
   </app-editor-dialog>
@@ -75,8 +108,18 @@
         <div class="record-top"><span class="record-icon" aria-hidden="true">↗</span><span class="record-state" [class.muted]="route.status !== 'Active'">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
         <h4 class="record-title">{{ route.name }}</h4>
         <p class="record-description">{{ route.description || 'Sin descripción' }}</p>
-        <dl class="record-metrics"><div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div><div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div><div><dt>Saldo inicial</dt><dd>{{ route.initialBalance }}</dd></div><div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div><div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div></dl>
-        <div class="record-footer"><span class="record-team">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> +{{ route.collectors.length - 1 }}</span> }</span><span aria-hidden="true">↗</span></div>
+        <dl class="record-metrics">
+          <div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div>
+          <div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div>
+          <div><dt>Saldo inicial</dt><dd>{{ route.initialBalance }}</dd></div>
+          <div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div>
+          <div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div>
+          <div><dt>Plantillas</dt><dd>{{ getActiveTemplatesCount(route.id) }} activas</dd></div>
+        </dl>
+        <div class="record-footer">
+          <span class="record-team">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> +{{ route.collectors.length - 1 }}</span> }</span>
+          <button type="button" class="btn-card-edit" (click)="$event.stopPropagation(); edit(route)">Editar</button>
+        </div>
       </article>
     }
     </div>

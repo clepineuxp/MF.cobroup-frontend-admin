@@ -24,4 +24,22 @@ dl { margin: var(--space-3) 0; }
 dd { margin: var(--space-1) 0 0; font-weight: 700; }
 aside { margin-top: var(--space-6); padding-top: var(--space-4); border-top: .0625rem solid var(--color-border); }
 aside p { margin-bottom: 0; color: var(--color-text-muted); }
+.route-assignment-section { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.route-assignment-header { display: flex; justify-content: space-between; align-items: center; }
+.section-label { font-weight: 700; }
+.route-quick-actions { display: flex; gap: var(--space-2); }
+.btn-text { padding: var(--space-1) var(--space-2); background: transparent; color: var(--color-primary); border: 0; font-size: .85rem; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.btn-text:hover { color: var(--color-primary-hover, #0056b3); }
+.btn-text:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.route-checkbox-list { display: grid; gap: var(--space-2); max-height: 12rem; overflow-y: auto; padding: var(--space-2); border: .0625rem solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-background); }
+.route-check-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-sm); cursor: pointer; transition: background-color .15s ease; }
+.route-check-item:hover { background: var(--color-surface); }
+.route-check-item.selected { background: var(--color-surface); border-left: .2rem solid var(--color-primary); }
+.route-check-item input[type="checkbox"] { width: 1.1rem; height: 1.1rem; margin: 0; cursor: pointer; }
+.route-item-body { display: flex; flex-direction: column; gap: 0.1rem; }
+.route-name { font-weight: 600; font-size: .92rem; }
+.route-meta { font-size: .78rem; color: var(--color-text-muted); }
+.no-routes-notice { margin: 0; padding: var(--space-2); color: var(--color-text-muted); font-size: .85rem; font-style: italic; }
+
 @media (max-width: 48rem) { .page-heading { align-items: start; flex-direction: column; } .workspace { grid-template-columns: 1fr; } .fields { flex-direction: column; } }

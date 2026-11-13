@@ -91,4 +91,45 @@ describe('LoanTemplatesPage ranges and routes', () => {
     expect(templates.create).not.toHaveBeenCalled();
     expect(page.error()).toBeTruthy();
   });
+  it('toggles, selects all and deselects all routes', async () => {
+    const fixture = TestBed.createComponent(LoanTemplatesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+
+    expect(page.isRouteSelected('r-1')).toBe(false);
+
+    page.toggleRoute('r-1', true);
+    expect(page.isRouteSelected('r-1')).toBe(true);
+
+    page.toggleRoute('r-1', false);
+    expect(page.isRouteSelected('r-1')).toBe(false);
+
+    page.selectAllRoutes();
+    expect(page.isRouteSelected('r-1')).toBe(true);
+
+    page.deselectAllRoutes();
+    expect(page.isRouteSelected('r-1')).toBe(false);
+  });
+  it('updates existing template without creating a new version and shows success', async () => {
+    const fixture = TestBed.createComponent(LoanTemplatesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+
+    templates.get.mockResolvedValueOnce({
+      id: 't-1', name: 'Diario', description: 'Desc', classification: 'Low', status: 'Published',
+      maxLoanDays: 30, maxPrincipalAmount: 1000000, minPrincipalAmount: 100000, minPercentage: 10, maxPercentage: 20,
+      routeIds: ['r-1'], version: 1, updatedAtUtc: new Date().toISOString(),
+    });
+
+    await page.edit({ id: 't-1', name: 'Diario' } as any);
+    expect(page.editingId()).toBe('t-1');
+
+    page.form.patchValue({ name: 'Diario Modificado' });
+    await page.submit();
+
+    expect(templates.update).toHaveBeenCalledWith('t-1', expect.objectContaining({
+      name: 'Diario Modificado',
+    }));
+    expect(page.success()).toBe('Plantilla actualizada correctamente.');
+  });
 });
