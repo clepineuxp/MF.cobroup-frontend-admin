@@ -1,7 +1,7 @@
 <section aria-labelledby="settings-title">
   <p class="eyebrow">Parámetros heredables</p>
   <h2 id="settings-title">Configuración de la organización</h2>
-  <p>Estos valores determinan la zona horaria de negocio, la moneda y los cupos que heredan las rutas sin una sobrescritura propia.</p>
+  <p>Estos valores determinan la zona horaria de negocio, la moneda, la hora de corte de caja y los cupos que heredan las rutas sin una sobrescritura propia.</p>
   @if (loading()) { <p>Cargando configuración…</p> }
   @else {
     @if (!configured()) { <p class="notice">La organización aún no tiene configuración. Los cupos heredados permanecen sin límite hasta guardarla.</p> }
@@ -12,6 +12,21 @@
       <label>Moneda ISO <input formControlName="currencyCode" maxlength="3" placeholder="COP" /></label>
       <label>Máximo de clientes activos por ruta <input type="number" min="1" formControlName="maxActiveCustomersPerRoute" placeholder="Sin límite" /></label>
       <label>Máximo de préstamos activos por ruta <input type="number" min="1" formControlName="maxActiveLoansPerRoute" placeholder="Sin límite" /></label>
+      <label>Hora de cierre de caja (hora local)
+        <input type="time" formControlName="dailyClosingTimeLocal" />
+        <span class="hint">
+          @if (calculatedUtcPreview) {
+            Equivale en UTC a: <strong>{{ calculatedUtcPreview }}</strong> (se almacena y valida en el servidor en UTC).
+          } @else {
+            Ingresa la hora local en que se debe cerrar la caja para cada jornada.
+          }
+        </span>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" formControlName="enforceDailyClosingSchedule" />
+        <span>Obligatorio cumplir horario de cierre de caja</span>
+      </label>
+      <p class="hint">Si está activo, al pasar este horario no se podrán registrar cobros, préstamos ni movimientos en ninguna ruta hasta que se cierre la caja abierta.</p>
       <p class="hint">Deja un cupo vacío para no establecer un límite general. Una ruta puede heredarlo o sobrescribirlo.</p>
       <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar configuración' }}</button>
     </form>

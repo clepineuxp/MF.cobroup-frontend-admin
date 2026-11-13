@@ -17,7 +17,7 @@ export class RouteFinancePage {
   readonly title = this.isExpense ? 'Gastos' : 'Ingresos e inversiones';
   readonly routes = signal<readonly CollectionRoute[]>([]); readonly selectedRouteId = signal('');
   readonly balance = signal<RouteBalance | null>(null); readonly entries = signal<readonly RouteFinancialEntry[]>([]);
-  readonly loading = signal(true); readonly saving = signal(false); readonly error = signal(''); readonly success = signal('');
+  readonly loading = signal(true); readonly saving = signal(false); readonly reopening = signal(false); readonly error = signal(''); readonly success = signal('');
   readonly editingId = signal<string | null>(null);
   readonly form = new FormGroup({
     type: new FormControl<RouteFinancialEntryType>(this.isExpense ? 'Expense' : 'Income', { nonNullable: true }),
@@ -30,6 +30,21 @@ export class RouteFinancePage {
   async selectRoute(id: string): Promise<void> { this.selectedRouteId.set(id); this.cancelEdit(); this.error.set(''); if (id) await this.reload(); else { this.balance.set(null); this.entries.set([]); } }
   edit(entry: RouteFinancialEntry): void { if (!entry.canEdit || this.saving()) return; this.editingId.set(entry.id); this.form.reset({ type: entry.type, concept: entry.concept, description: entry.description ?? '', amount: entry.amount }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   cancelEdit(): void { this.editingId.set(null); this.form.reset({ type: this.isExpense ? 'Expense' : 'Income', concept: '', description: '', amount: null }); }
+  async reopenBox(): Promise<void> {
+    const routeId = this.selectedRouteId();
+    if (!routeId || this.reopening()) return;
+    if (!confirm('¿Deseas reabrir la última caja cerrada para esta ruta? Solo es posible si no hay otra caja abierta.')) return;
+    this.reopening.set(true); this.error.set(''); this.success.set('');
+    try {
+      const res = await this.finances.reopenBox(routeId);
+      this.success.set(res.message || 'Caja reabierta exitosamente.');
+      await this.reload();
+    } catch (err) {
+      this.error.set(err instanceof Error ? err.message : 'No fue posible reabrir la caja.');
+    } finally {
+      this.reopening.set(false);
+    }
+  }
   async submit(): Promise<void> {
     if (this.form.invalid || !this.selectedRouteId() || this.saving()) { this.form.markAllAsTouched(); return; }
     this.saving.set(true); this.error.set(''); this.success.set('');
