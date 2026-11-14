@@ -2,8 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AUTH_CONFIG } from '../../../core/auth/auth.config';
 import {
+  CreateNonPaymentReasonRequest,
   CreatePaymentMethodRequest,
+  NonPaymentReasonItem,
   PaymentMethodItem,
+  UpdateNonPaymentReasonRequest,
   UpdatePaymentMethodRequest,
 } from './payment-method.models';
 
@@ -54,13 +57,65 @@ export class PaymentMethodsService {
     return (await response.json()) as PaymentMethodItem;
   }
 
+  async delete(id: string): Promise<void> {
+    const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/payment-methods/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible eliminar el medio de pago.'));
+  }
+
+  async listReasons(includeInactive = true): Promise<readonly NonPaymentReasonItem[]> {
+    const response = await this.auth.authorizedFetch(
+      `${this.config.identityBaseUrl}/api/v1/non-payment-reasons?includeInactive=${includeInactive}`
+    );
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible consultar los motivos de no pago.'));
+    return (await response.json()) as readonly NonPaymentReasonItem[];
+  }
+
+  async createReason(request: CreateNonPaymentReasonRequest): Promise<NonPaymentReasonItem> {
+    const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/non-payment-reasons`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible crear el motivo de no pago.'));
+    return (await response.json()) as NonPaymentReasonItem;
+  }
+
+  async updateReason(id: string, request: UpdateNonPaymentReasonRequest): Promise<NonPaymentReasonItem> {
+    const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/non-payment-reasons/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible actualizar el motivo de no pago.'));
+    return (await response.json()) as NonPaymentReasonItem;
+  }
+
+  async toggleReasonStatus(id: string, isActive: boolean): Promise<NonPaymentReasonItem> {
+    const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/non-payment-reasons/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive }),
+    });
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible cambiar el estado del motivo de no pago.'));
+    return (await response.json()) as NonPaymentReasonItem;
+  }
+
+  async deleteReason(id: string): Promise<void> {
+    const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/non-payment-reasons/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(await this.message(response, 'No fue posible eliminar el motivo de no pago.'));
+  }
+
   private async message(response: Response, fallback: string): Promise<string> {
-    if (response.status === 403) return 'No tienes permisos de Administrador para gestionar medios de pago.';
+    if (response.status === 403) return 'No tienes permisos de Administrador para gestionar estos parámetros.';
     if (response.status === 409) {
       const detail = (await response.json().catch(() => null)) as { error?: string } | null;
-      return detail?.error ?? 'Ya existe un medio de pago con este nombre en la organización.';
+      return detail?.error ?? 'Ya existe un registro con este nombre en la organización.';
     }
-    const detail = (await response.json().catch(() => null)) as { error?: string; message?: string } | null;
-    return detail?.error ?? detail?.message ?? fallback;
+    const detail = (await response.json().catch(() => null)) as { error?: string; message?: string; detail?: string } | null;
+    return detail?.error ?? detail?.message ?? detail?.detail ?? fallback;
   }
 }

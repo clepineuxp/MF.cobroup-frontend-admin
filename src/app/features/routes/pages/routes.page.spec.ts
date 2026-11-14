@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoutesService } from '../data/routes.service';
 import { LoanTemplatesService } from '../../loan-templates/data/loan-templates.service';
+import { OrganizationSettingsService } from '../../organization-settings/data/organization-settings.service';
 import { RoutesPage } from './routes.page';
 
 describe('RoutesPage', () => {
@@ -29,10 +31,19 @@ describe('RoutesPage', () => {
     ]),
   };
 
-  beforeEach(() => {
-    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
-    Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function(this: HTMLDialogElement) { this.removeAttribute('open'); } });
-  });
+  const orgSettingsMock = {
+    get: vi.fn().mockResolvedValue({
+      configured: true,
+      settings: {
+        timeZoneId: 'America/Bogota',
+        currencyCode: 'COP',
+        maxActiveCustomersPerRoute: 200,
+        maxActiveLoansPerRoute: 150,
+        updatedAtUtc: new Date().toISOString(),
+      },
+    }),
+  };
+
   beforeEach(async () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
@@ -42,6 +53,7 @@ describe('RoutesPage', () => {
       providers: [
         { provide: RoutesService, useValue: service },
         { provide: LoanTemplatesService, useValue: templatesMock },
+        { provide: OrganizationSettingsService, useValue: orgSettingsMock },
       ],
     }).compileComponents();
   });
@@ -84,7 +96,7 @@ describe('RoutesPage', () => {
     expect(root.querySelector('form')).toBeNull();
     root.querySelector<HTMLElement>('article')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     await fixture.whenStable();
-    expect(root.querySelector('dialog[open]')).toBeTruthy();
+    expect(root.querySelector('form')).toBeTruthy();
     expect(fixture.componentInstance.form.controls.name.value).toBe('Centro');
     fixture.componentInstance.closeEditor(); await fixture.whenStable();
     expect(root.querySelector('form')).toBeNull(); expect(service.update).not.toHaveBeenCalled();
@@ -114,5 +126,70 @@ describe('RoutesPage', () => {
 
     page.deselectAllTemplates();
     expect(page.selectedTemplateIds().size).toBe(0);
+  });
+
+  it('filters routes reactively using the search bar', async () => {
+    const fixture = TestBed.createComponent(RoutesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+
+    expect(page.filteredRoutes().length).toBe(1);
+    page.searchTerm.set('NoExiste');
+    expect(page.filteredRoutes().length).toBe(0);
+    page.searchTerm.set('centro');
+    expect(page.filteredRoutes().length).toBe(1);
+  });
+
+  it('handles inheritance toggle for customer and loan limits', async () => {
+    const fixture = TestBed.createComponent(RoutesPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.edit(page.routes()[0]);
+
+    // Customers was inherited
+    expect(page.inheritCustomers()).toBe(true);
+    expect(page.effectiveCustomersDisplay()).toBe('100');
+
+    // Uncheck inheritance -> should unlock and set mode to Overridden
+    page.toggleInheritCustomers(false);
+    expect(page.inheritCustomers()).toBe(false);
+    expect(page.form.controls.maxActiveCustomersMode.value).toBe('Overridden');
+
+    // Check again -> should lock and set mode to Inherited
+    page.toggleInheritCustomers(true);
+    expect(page.inheritCustomers()).toBe(true);
+    expect(page.form.controls.maxActiveCustomersMode.value).toBe('Inherited');
+  });
+
+  it('paginates routes with loadMore (Ver más) when there are more than 12 routes', async () => {
+    const manyRoutes = Array.from({ length: 18 }, (_, i) => ({
+      id: `route-${i + 1}`,
+      name: `Ruta ${i + 1}`,
+      description: `Sector ${i + 1}`,
+      status: 'Active' as const,
+      supervisor: { id: 'supervisor-1', username: 'supervisor', displayName: 'Supervisor' },
+      collectors: [{ id: 'collector-1', username: 'collector', displayName: 'Cobrador' }],
+      maxActiveCustomers: { mode: 'Inherited' as const, overrideValue: null, effectiveValue: 100 },
+      maxActiveLoans: { mode: 'Inherited' as const, overrideValue: null, effectiveValue: 50 },
+      initialBalance: 0,
+      createdAtUtc: new Date().toISOString(),
+      updatedAtUtc: new Date().toISOString(),
+    }));
+    service.list.mockResolvedValueOnce(manyRoutes);
+
+    const fixture = TestBed.createComponent(RoutesPage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const page = fixture.componentInstance;
+    expect(page.visibleRoutes().length).toBe(12);
+    expect(page.hasMoreRoutes()).toBe(true);
+    expect(page.remainingRoutesCount()).toBe(6);
+
+    page.loadMore();
+    fixture.detectChanges();
+
+    expect(page.visibleRoutes().length).toBe(18);
+    expect(page.hasMoreRoutes()).toBe(false);
   });
 });

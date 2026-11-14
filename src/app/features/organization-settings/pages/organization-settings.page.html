@@ -1,34 +1,377 @@
-<section aria-labelledby="settings-title">
-  <p class="eyebrow">Parámetros heredables</p>
-  <h2 id="settings-title">Configuración de la organización</h2>
-  <p>Estos valores determinan la zona horaria de negocio, la moneda, la hora de corte de caja y los cupos que heredan las rutas sin una sobrescritura propia.</p>
-  @if (loading()) { <p>Cargando configuración…</p> }
-  @else {
-    @if (!configured()) { <p class="notice">La organización aún no tiene configuración. Los cupos heredados permanecen sin límite hasta guardarla.</p> }
-    @if (error()) { <p class="message error" role="alert">{{ error() }}</p> }
-    @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <label>Zona horaria IANA <input formControlName="timeZoneId" placeholder="America/Bogota" /></label>
-      <label>Moneda ISO <input formControlName="currencyCode" maxlength="3" placeholder="COP" /></label>
-      <label>Máximo de clientes activos por ruta <input type="number" min="1" formControlName="maxActiveCustomersPerRoute" placeholder="Sin límite" /></label>
-      <label>Máximo de préstamos activos por ruta <input type="number" min="1" formControlName="maxActiveLoansPerRoute" placeholder="Sin límite" /></label>
-      <label>Hora de cierre de caja (hora local)
-        <input type="time" formControlName="dailyClosingTimeLocal" />
-        <span class="hint">
-          @if (calculatedUtcPreview) {
-            Equivale en UTC a: <strong>{{ calculatedUtcPreview }}</strong> (se almacena y valida en el servidor en UTC).
+<div class="org-settings-page">
+  <!-- Page Header -->
+  <header class="settings-header" aria-labelledby="settings-title">
+    <div class="header-main">
+      <div class="header-titles">
+        <p class="header-eyebrow">SISTEMA Y POLÍTICAS GLOBALES</p>
+        <h2 id="settings-title">Configuración de la Organización</h2>
+        <p class="header-description">
+          Define las políticas financieras, parámetros de negocio y cupos heredables para todas las rutas de cobro.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-badge" [class.is-configured]="configured()">
+          <span class="status-dot"></span>
+          @if (configured()) {
+            <span>Organización configurada</span>
+            @if (lastUpdatedAt()) {
+              <small class="updated-time">· Actualizado {{ lastUpdatedAt() | date:'medium' }}</small>
+            }
           } @else {
-            Ingresa la hora local en que se debe cerrar la caja para cada jornada.
+            <span>Configuración pendiente</span>
           }
-        </span>
-      </label>
-      <label class="checkbox-label">
-        <input type="checkbox" formControlName="enforceDailyClosingSchedule" />
-        <span>Obligatorio cumplir horario de cierre de caja</span>
-      </label>
-      <p class="hint">Si está activo, al pasar este horario no se podrán registrar cobros, préstamos ni movimientos en ninguna ruta hasta que se cierre la caja abierta.</p>
-      <p class="hint">Deja un cupo vacío para no establecer un límite general. Una ruta puede heredarlo o sobrescribirlo.</p>
-      <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar configuración' }}</button>
+        </div>
+
+        <button
+          type="button"
+          class="btn-save-header"
+          (click)="submit()"
+          [disabled]="saving() || loading()"
+        >
+          @if (saving()) {
+            <span class="spinner-sm" aria-hidden="true"></span>
+            Guardando…
+          } @else {
+            <app-icon name="check" /> Guardar cambios
+          }
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Feedback Alerts -->
+  @if (error()) {
+    <p class="alert-message error" role="alert">
+      <app-icon name="bolt" />
+      <span>{{ error() }}</span>
+    </p>
+  }
+  @if (success()) {
+    <p class="alert-message success" role="status">
+      <app-icon name="check" />
+      <span>{{ success() }}</span>
+    </p>
+  }
+  @if (!configured() && !loading()) {
+    <div class="alert-banner warning">
+      <app-icon name="info" />
+      <div>
+        <strong>Organización pendiente de configuración inicial</strong>
+        <p>Los cupos para rutas permanecerán sin límite y se aplicará la zona horaria del sistema hasta que guardes los parámetros iniciales.</p>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p>Cargando parámetros de la organización…</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="settings-form">
+      <div class="settings-grid">
+        <!-- Card 1: Identidad Regional y Moneda -->
+        <section class="settings-card" aria-labelledby="card-regional-title">
+          <div class="card-header">
+            <div class="card-icon" aria-hidden="true"><app-icon name="globe" /></div>
+            <div>
+              <h3 id="card-regional-title" class="card-title">1. Identidad Regional y Moneda</h3>
+              <p class="card-subtitle">Moneda contable y zona horaria para el cálculo de jornadas de negocio.</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Moneda Operativa -->
+            <div class="setting-field-group">
+              <label class="group-label" for="currency-input">
+                <span>Moneda operativa (Código ISO 4217) <span class="required">*</span></span>
+              </label>
+
+              <!-- Currency Presets -->
+              <div class="preset-chips-list" role="group" aria-label="Monedas recomendadas">
+                @for (preset of currencyPresets; track preset.code) {
+                  <button
+                    type="button"
+                    class="preset-chip"
+                    [class.is-selected]="form.controls.currencyCode.value.toUpperCase() === preset.code"
+                    (click)="selectCurrency(preset.code)"
+                    [title]="preset.name"
+                  >
+                    <strong>{{ preset.code }}</strong>
+                    <span>{{ preset.symbol }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="input-with-preview">
+                <input
+                  id="currency-input"
+                  formControlName="currencyCode"
+                  maxlength="3"
+                  placeholder="COP"
+                  autocomplete="off"
+                  class="input-uppercase"
+                />
+                <span class="currency-preview-tag">
+                  Moneda activa: <strong>{{ form.controls.currencyCode.value.toUpperCase() || '---' }}</strong>
+                </span>
+              </div>
+              <small class="field-hint">
+                Código de tres letras que define el símbolo e inventario de dinero en los balances y recibos.
+              </small>
+            </div>
+
+            <!-- Zona Horaria IANA -->
+            <div class="setting-field-group">
+              <div class="group-header-with-clock">
+                <label class="group-label" for="tz-select">
+                  <span>Zona horaria de referencia (IANA) <span class="required">*</span></span>
+                </label>
+
+                @if (currentTimeInTz()) {
+                  <span class="live-clock-badge" title="Hora actual calculada en esta zona horaria">
+                    <app-icon name="clock" />
+                    <span>{{ currentTimeInTz() }}</span>
+                  </span>
+                }
+              </div>
+
+              <select id="tz-select" formControlName="timeZoneId" (change)="selectTimezone(form.controls.timeZoneId.value)">
+                <option value="">Selecciona zona horaria de negocio...</option>
+                @for (tz of timezonePresets; track tz.id) {
+                  <option [value]="tz.id">{{ tz.label }} ({{ tz.id }})</option>
+                }
+              </select>
+
+              <div class="custom-tz-input-wrap">
+                <input
+                  formControlName="timeZoneId"
+                  placeholder="O escribe un identificador IANA (ej. America/Bogota)"
+                  autocomplete="off"
+                />
+              </div>
+
+              <small class="field-hint">
+                Determina la fecha y hora oficial para el inicio de jornada, cortes diarios y cálculo de mora en las rutas.
+              </small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 2: Cupos Heredables por las Rutas -->
+        <section class="settings-card" aria-labelledby="card-limits-title">
+          <div class="card-header">
+            <div class="card-icon" aria-hidden="true"><app-icon name="route" /></div>
+            <div>
+              <h3 id="card-limits-title" class="card-title">2. Cupos Heredables por las Rutas</h3>
+              <p class="card-subtitle">Límites predeterminados que adoptan automáticamente todas las rutas de cobro.</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="inheritance-info-box">
+              <app-icon name="info" />
+              <p>
+                <strong>¿Cómo funciona la herencia?</strong> Cualquier ruta con la casilla <em>"Heredar de la organización"</em>
+                activa utilizará estos cupos. Si una ruta específica requiere límites superiores o inferiores, el administrador puede
+                desmarcar la herencia en esa ruta para fijar un valor propio.
+              </p>
+            </div>
+
+            <!-- Cupo Máximo de Clientes Activos -->
+            <div class="setting-field-group">
+              <div class="limit-header">
+                <label class="group-label" for="max-customers-input">
+                  <span>Máximo de clientes activos por ruta</span>
+                </label>
+                <div class="toggle-pills-group">
+                  <button
+                    type="button"
+                    class="toggle-pill"
+                    [class.is-active]="form.controls.maxActiveCustomersPerRoute.value === null"
+                    (click)="setCustomersUnlimited(true)"
+                  >
+                    Sin límite general
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-pill"
+                    [class.is-active]="form.controls.maxActiveCustomersPerRoute.value !== null"
+                    (click)="setCustomersUnlimited(false)"
+                  >
+                    Definir límite
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-limit-wrap">
+                <input
+                  id="max-customers-input"
+                  type="number"
+                  min="1"
+                  formControlName="maxActiveCustomersPerRoute"
+                  placeholder="Ilimitado (Sin tope de clientes)"
+                  [class.is-unlimited]="form.controls.maxActiveCustomersPerRoute.value === null"
+                />
+                <span class="limit-badge" [class.unlimited]="form.controls.maxActiveCustomersPerRoute.value === null">
+                  {{ form.controls.maxActiveCustomersPerRoute.value ? (form.controls.maxActiveCustomersPerRoute.value + ' clientes máx.') : 'Ilimitado' }}
+                </span>
+              </div>
+              <small class="field-hint">
+                Protege la capacidad operativa impidiendo que una ruta mantenga más de esta cantidad de clientes abiertos al mismo tiempo.
+              </small>
+            </div>
+
+            <!-- Cupo Máximo de Préstamos Activos -->
+            <div class="setting-field-group">
+              <div class="limit-header">
+                <label class="group-label" for="max-loans-input">
+                  <span>Máximo de préstamos activos por ruta</span>
+                </label>
+                <div class="toggle-pills-group">
+                  <button
+                    type="button"
+                    class="toggle-pill"
+                    [class.is-active]="form.controls.maxActiveLoansPerRoute.value === null"
+                    (click)="setLoansUnlimited(true)"
+                  >
+                    Sin límite general
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-pill"
+                    [class.is-active]="form.controls.maxActiveLoansPerRoute.value !== null"
+                    (click)="setLoansUnlimited(false)"
+                  >
+                    Definir límite
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-limit-wrap">
+                <input
+                  id="max-loans-input"
+                  type="number"
+                  min="1"
+                  formControlName="maxActiveLoansPerRoute"
+                  placeholder="Ilimitado (Sin tope de créditos)"
+                  [class.is-unlimited]="form.controls.maxActiveLoansPerRoute.value === null"
+                />
+                <span class="limit-badge" [class.unlimited]="form.controls.maxActiveLoansPerRoute.value === null">
+                  {{ form.controls.maxActiveLoansPerRoute.value ? (form.controls.maxActiveLoansPerRoute.value + ' créditos máx.') : 'Ilimitado' }}
+                </span>
+              </div>
+              <small class="field-hint">
+                Tope máximo de créditos vigentes en simultáneo para gestionar el riesgo de colocación por ruta.
+              </small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 3: Control de Jornada y Cierre de Caja -->
+        <section class="settings-card full-width" aria-labelledby="card-schedule-title">
+          <div class="card-header">
+            <div class="card-icon" aria-hidden="true"><app-icon name="lock" /></div>
+            <div>
+              <h3 id="card-schedule-title" class="card-title">3. Horario y Política de Cierre de Caja</h3>
+              <p class="card-subtitle">Hora límite sugerida u obligatoria para el arqueo y cierre diario de cada ruta.</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="closing-schedule-grid">
+              <div class="setting-field-group">
+                <label class="group-label" for="closing-time-input">
+                  <span>Hora de cierre de caja (Hora local)</span>
+                </label>
+                <div class="input-time-wrap">
+                  <input
+                    id="closing-time-input"
+                    type="time"
+                    formControlName="dailyClosingTimeLocal"
+                  />
+                  @if (form.controls.dailyClosingTimeLocal.value) {
+                    <button
+                      type="button"
+                      class="btn-clear-time"
+                      (click)="form.controls.dailyClosingTimeLocal.setValue('')"
+                      title="Quitar hora de cierre"
+                    >
+                      ✕
+                    </button>
+                  }
+                </div>
+
+                <div class="utc-conversion-box">
+                  <span class="utc-icon"><app-icon name="clock" /></span>
+                  <div>
+                    @if (calculatedUtcPreview) {
+                      <p class="utc-text">
+                        Equivalente en UTC: <strong>{{ calculatedUtcPreview }}</strong>
+                      </p>
+                      <small class="utc-hint">
+                        Hora estándar en que el servidor evalúa el corte según la zona horaria {{ form.controls.timeZoneId.value }}.
+                      </small>
+                    } @else {
+                      <p class="utc-text">Sin horario de cierre fijado.</p>
+                      <small class="utc-hint">Ingresa la hora en formato local para habilitar el control de jornada.</small>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Enforce Daily Closing Switch Card -->
+              <div class="policy-toggle-card" [class.is-enforced]="form.controls.enforceDailyClosingSchedule.value">
+                <label class="policy-toggle-label">
+                  <input
+                    type="checkbox"
+                    formControlName="enforceDailyClosingSchedule"
+                  />
+                  <div class="policy-toggle-info">
+                    <strong class="policy-title">Obligatorio cumplir horario de cierre de caja</strong>
+                    <p class="policy-description">
+                      Si está activo, al transcurrir este horario el sistema bloqueará registros de cobros, desembolsos y movimientos en todas las rutas hasta que se realice el cierre formal de la caja abierta.
+                    </p>
+                  </div>
+                </label>
+
+                <div class="policy-status-indicator">
+                  @if (form.controls.enforceDailyClosingSchedule.value) {
+                    <span class="policy-badge enforced">
+                      <app-icon name="lock" /> Política estricta: Bloquea operaciones fuera de horario
+                    </span>
+                  } @else {
+                    <span class="policy-badge flexible">
+                      <app-icon name="info" /> Horario informativo: Permite cobros con advertencia
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Bottom Save Action Bar -->
+      <div class="settings-actions-footer">
+        <button
+          type="submit"
+          class="btn-save-bottom"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <span class="spinner-sm" aria-hidden="true"></span>
+            Guardando configuración…
+          } @else {
+            <app-icon name="check" /> Guardar configuración de la organización
+          }
+        </button>
+
+        <p class="footer-note">
+          Los cambios se propagarán al instante a las rutas y balances de la organización.
+        </p>
+      </div>
     </form>
   }
-</section>
+</div>

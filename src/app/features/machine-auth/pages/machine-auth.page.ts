@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouteSelectorComponent } from '../../../shared/ui/route-selector/route-selector.component';
+import { RouteSelectionService } from '../../routes/data/route-selection.service';
 import { RoutesService } from '../../routes/data/routes.service';
 import { CollectionRoute } from '../../routes/data/route.models';
 import { MachineAuthService, PendingMachineOtp, MachineAuthorization } from '../data/machine-auth.service';
@@ -7,17 +9,19 @@ import { MachineAuthService, PendingMachineOtp, MachineAuthorization } from '../
 @Component({
   selector: 'app-machine-auth-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouteSelectorComponent],
   templateUrl: './machine-auth.page.html',
   styleUrl: './machine-auth.page.scss',
 })
 export class MachineAuthPage {
-  private readonly routesService = inject(RoutesService); private readonly machine = inject(MachineAuthService);
-  readonly routes = signal<readonly CollectionRoute[]>([]); readonly pending = signal<readonly PendingMachineOtp[]>([]); readonly authorizations = signal<readonly MachineAuthorization[]>([]); readonly authorizationTotal = signal(0); readonly error = signal(''); readonly loading = signal(true); readonly acting = signal(''); routeId = ''; roleFilter: 'all' | 'Supervisor' | 'Collector' = 'all'; userId = ''; page = 1; pageSize = 20; otp: Record<string, string> = {}; days: Record<string, number | null> = {}; indefinite: Record<string, boolean> = {};
+  private readonly routesService = inject(RoutesService);
+  private readonly routeSelection = inject(RouteSelectionService);
+  private readonly machine = inject(MachineAuthService);
+  readonly routes = signal<readonly CollectionRoute[]>([]); readonly pending = signal<readonly PendingMachineOtp[]>([]); readonly authorizations = signal<readonly MachineAuthorization[]>([]); readonly authorizationTotal = signal(0); readonly error = signal(''); readonly loading = signal(true); readonly acting = signal(''); routeId = this.routeSelection.selectedRouteId(); roleFilter: 'all' | 'Supervisor' | 'Collector' = 'all'; userId = ''; page = 1; pageSize = 20; otp: Record<string, string> = {}; days: Record<string, number | null> = {}; indefinite: Record<string, boolean> = {};
   constructor() { void this.load(); }
-  async load(): Promise<void> { this.loading.set(true); this.error.set(''); try { this.routes.set(await this.routesService.list()); this.pending.set(await this.machine.pending(this.routeId || undefined)); await this.loadAuthorizations(); } catch (e) { this.error.set(e instanceof Error ? e.message : 'No fue posible cargar autorizaciones.'); } finally { this.loading.set(false); } }
+  async load(): Promise<void> { this.loading.set(true); this.error.set(''); try { const loadedRoutes = await this.routesService.list(); this.routes.set(loadedRoutes); this.routeId = this.routeSelection.ensureValidRoute(loadedRoutes); this.pending.set(await this.machine.pending(this.routeId || undefined)); await this.loadAuthorizations(); } catch (e) { this.error.set(e instanceof Error ? e.message : 'No fue posible cargar autorizaciones.'); } finally { this.loading.set(false); } }
   async loadAuthorizations(): Promise<void> { const result = await this.machine.list({ routeId: this.routeId || undefined, role: this.roleFilter === 'all' ? undefined : this.roleFilter, userId: this.userId || undefined, page: this.page, pageSize: this.pageSize }); this.authorizations.set(result.items); this.authorizationTotal.set(result.total); }
-  onRouteChange(): void { this.userId = ''; this.page = 1; void this.load(); }
+  onRouteChange(newRouteId?: string): void { if (newRouteId !== undefined) { this.routeId = newRouteId; } this.routeSelection.setSelectedRoute(this.routeId); this.userId = ''; this.page = 1; void this.load(); }
   onAuthorizationFilterChange(): void { this.page = 1; void this.loadAuthorizations().catch((e) => this.error.set(e instanceof Error ? e.message : 'No fue posible filtrar dispositivos.')); }
   availableUsers(): readonly { id: string; displayName: string; role: 'Supervisor' | 'Collector' }[] { const source = this.routeId ? this.routes().filter(route => route.id === this.routeId) : this.routes(); const users = new Map<string, { id: string; displayName: string; role: 'Supervisor' | 'Collector' }>(); source.forEach(route => { users.set(route.supervisor.id, { ...route.supervisor, role: 'Supervisor' }); route.collectors.forEach(user => users.set(user.id, { ...user, role: 'Collector' })); }); return [...users.values()].filter(user => this.roleFilter === 'all' || user.role === this.roleFilter).sort((a, b) => a.displayName.localeCompare(b.displayName)); }
   totalPages(): number { return Math.max(1, Math.ceil(this.authorizationTotal() / this.pageSize)); }

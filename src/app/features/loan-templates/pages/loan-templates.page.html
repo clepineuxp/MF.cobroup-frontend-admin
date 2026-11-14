@@ -24,20 +24,33 @@
       </div>
       <div class="route-assignment-section">
         <div class="route-assignment-header">
-          <label class="section-label">Rutas asignadas</label>
+          <label class="section-label">Rutas asignadas ({{ form.controls.routeIds.value.length }}/{{ routes().length }})</label>
           <div class="route-quick-actions">
             <button type="button" class="btn-text" (click)="selectAllRoutes()" [disabled]="routes().length === 0">Todas</button>
             <button type="button" class="btn-text" (click)="deselectAllRoutes()" [disabled]="form.controls.routeIds.value.length === 0">Ninguna</button>
           </div>
         </div>
+        @if (routes().length > 0) {
+          <div class="route-search-bar">
+            <input
+              type="text"
+              placeholder="Buscar ruta por nombre o supervisor…"
+              [value]="routeSearchTerm()"
+              (input)="routeSearchTerm.set($any($event.target).value)"
+              aria-label="Filtrar rutas asignables"
+            />
+          </div>
+        }
         <select multiple formControlName="routeIds" class="visually-hidden" aria-hidden="true" tabindex="-1">
           @for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }
         </select>
         <div class="route-checkbox-list">
           @if (routes().length === 0) {
             <p class="no-routes-notice">No hay rutas activas disponibles en esta organización.</p>
+          } @else if (filteredRoutes().length === 0) {
+            <p class="no-routes-notice">No se encontraron rutas para «{{ routeSearchTerm() }}».</p>
           }
-          @for (route of routes(); track route.id) {
+          @for (route of filteredRoutes(); track route.id) {
             <label class="route-check-item" [class.selected]="isRouteSelected(route.id)">
               <input type="checkbox" [checked]="isRouteSelected(route.id)" (change)="toggleRoute(route.id, $any($event.target).checked)" />
               <div class="route-item-body">

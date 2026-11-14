@@ -1,7 +1,692 @@
-<div class="finance-page"><header><p class="eyebrow">CONTROL FINANCIERO POR RUTA</p><h2>{{ title }}</h2><p>Administración puede registrar y modificar movimientos de cualquier fecha.</p></header>
-@if (error()) { <p class="message error" role="alert">{{ error() }}</p> } @if (success()) { <p class="message success" role="status">{{ success() }}</p> }
-<label class="route-picker">Ruta<select [value]="selectedRouteId()" (change)="selectRoute($any($event.target).value)"><option value="">Selecciona una ruta</option>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label>
-@if (balance(); as item) { <section class="balance-card" [class.negative]="item.netBalance < 0"><div><span>Balance actual</span><strong>{{ item.netBalance | currency:'COP':'symbol-narrow':'1.0-2' }}</strong><small>Inicial {{ item.initialBalance | currency:'COP':'symbol-narrow':'1.0-2' }} · Préstamos −{{ item.loanDisbursements | currency:'COP':'symbol-narrow':'1.0-2' }} · Cobros +{{ item.paymentCollections | currency:'COP':'symbol-narrow':'1.0-2' }}</small></div><button type="button" class="secondary" (click)="reopenBox()" [disabled]="reopening()" style="align-self: start; background: rgba(255,255,255,0.15); color: #fff; border-color: #fff; cursor: pointer;">{{ reopening() ? 'Reabriendo…' : 'Reabrir última caja cerrada' }}</button></section> }
-@if (selectedRouteId()) { <div class="workspace"><section class="panel"><h3>{{ editingId() ? 'Modificar movimiento' : 'Nuevo movimiento' }}</h3><form [formGroup]="form" (ngSubmit)="submit()">@if (!isExpense) { <label>Tipo<select formControlName="type"><option value="Income">Ingreso</option><option value="Investment">Inversión</option></select></label> }<label>Concepto<input formControlName="concept" maxlength="160" /></label><label>Descripción<textarea formControlName="description" maxlength="1000" rows="4"></textarea></label><label>Monto<input type="number" min="0.01" step="0.01" formControlName="amount" /></label><div class="actions"><button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : editingId() ? 'Guardar cambios' : 'Registrar' }}</button>@if (editingId()) { <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button> }</div></form></section>
-<section class="panel history"><h3>Historial de la ruta</h3>@if (!loading() && entries().length === 0) { <p>No hay movimientos en esta sección.</p> } @for (entry of entries(); track entry.id) { <article><div><span class="type">{{ entry.type === 'Income' ? 'Ingreso' : entry.type === 'Investment' ? 'Inversión' : 'Gasto' }}</span><h4>{{ entry.concept }}</h4><p>{{ entry.description || 'Sin descripción' }}</p></div><strong>{{ entry.amount | currency:'COP':'symbol-narrow':'1.0-2' }}</strong><footer><span>{{ entry.createdAtUtc | date:'medium':'-0500' }} · {{ entry.createdByDisplayName }}</span><button type="button" class="link" (click)="edit(entry)">Modificar</button></footer></article> }</section></div> }
+<div class="finance-page">
+  <!-- Page Header -->
+  <header class="finance-header">
+    <div class="header-titles">
+      <h2 class="title">Balance de Rutas, Ingresos y Gastos</h2>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn-action secondary"
+        (click)="openCreateModal('Income')"
+        title="Registrar nuevo ingreso o inversión"
+      >
+        <span class="btn-icon"><app-icon name="plus" /></span>
+        <span>Nuevo Ingreso</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn-action secondary"
+        (click)="openCreateModal('Expense')"
+        title="Registrar nuevo gasto operativo"
+      >
+        <span class="btn-icon"><app-icon name="plus" /></span>
+        <span>Nuevo Gasto</span>
+      </button>
+
+      @if (isSingleRouteSelected()) {
+        <button
+          type="button"
+          class="btn-action outline danger-border"
+          (click)="reopenBox()"
+          [disabled]="reopening()"
+          title="Reabrir la última caja cerrada para esta ruta"
+        >
+          <span class="btn-icon"><app-icon name="lock" /></span>
+          <span>{{ reopening() ? 'Reabriendo…' : 'Reabrir Caja' }}</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="btn-action icon-only"
+        (click)="reload()"
+        [disabled]="loadingMovements()"
+        title="Recargar datos"
+        aria-label="Recargar datos"
+      >
+        <span class="btn-icon" [class.spinning]="loadingMovements()"><app-icon name="refresh" /></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Feedback Notifications -->
+  @if (error()) {
+    <div class="feedback-banner error" role="alert">
+      <span class="banner-icon">⚠️</span>
+      <span class="banner-text">{{ error() }}</span>
+      <button type="button" class="btn-dismiss" (click)="error.set('')" aria-label="Cerrar">✕</button>
+    </div>
+  }
+  @if (success()) {
+    <div class="feedback-banner success" role="status">
+      <span class="banner-icon">✓</span>
+      <span class="banner-text">{{ success() }}</span>
+      <button type="button" class="btn-dismiss" (click)="success.set('')" aria-label="Cerrar">✕</button>
+    </div>
+  }
+
+  <!-- Filters & Controls Bar -->
+  <section class="filters-card" aria-label="Filtros de ruta y periodo">
+    <!-- Top Row: Route Selector & Multi-selection Toggle -->
+    <div class="filters-row routes-row">
+      <div class="filter-group">
+        <label for="route-select-dropdown" class="filter-label">
+          <span class="filter-icon"><app-icon name="route" /></span>
+          <span>Ruta(s) de cobro:</span>
+        </label>
+        <div class="select-wrap">
+          <app-route-selector
+            selectId="route-select-dropdown"
+            [routes]="routes()"
+            [value]="selectedRouteId()"
+            [disabled]="isMultiSelectActive()"
+            allValue="all"
+            allLabel="Todas las rutas (Consolidado general)"
+            [showSupervisor]="true"
+            ariaLabel="Ruta(s) de cobro"
+            (valueChange)="selectRoute($event)"
+          />
+        </div>
+      </div>
+
+      <div class="multi-select-toggle-wrap">
+        <button
+          type="button"
+          class="btn-toggle-multi"
+          [class.active]="isMultiSelectActive()"
+          (click)="toggleMultiSelect()"
+          title="Permite seleccionar un subconjunto específico de rutas para consolidar su balance"
+        >
+          <span>{{ isMultiSelectActive() ? '✓ Selección múltiple activa' : 'Seleccionar varias rutas' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Multi-selection Chips Strip (Visible when multi-select active) -->
+    @if (isMultiSelectActive()) {
+      <div class="multi-routes-strip" role="group" aria-label="Selección de rutas específicas">
+        <div class="multi-strip-top">
+          <span class="strip-label">Rutas a consolidar ({{ selectedMultiRouteIds().size }} de {{ routes().length }}):</span>
+          <div class="multi-strip-controls">
+            <input
+              type="text"
+              class="multi-route-search"
+              placeholder="Filtrar rutas en la lista…"
+              [value]="multiRouteSearchQuery()"
+              (input)="onMultiRouteSearchChange($event)"
+              aria-label="Filtrar rutas para selección múltiple"
+            />
+            <button type="button" class="btn-strip-quick" (click)="selectAllMultiRoutes()">Todas</button>
+          </div>
+        </div>
+        <div class="strip-chips">
+          @for (route of filteredMultiRoutes(); track route.id) {
+            <button
+              type="button"
+              class="route-chip"
+              [class.selected]="isRouteInMulti(route.id)"
+              (click)="toggleRouteInMulti(route.id)"
+              [attr.aria-pressed]="isRouteInMulti(route.id)"
+            >
+              <span class="chip-check">{{ isRouteInMulti(route.id) ? '✓' : '+' }}</span>
+              <span class="chip-name">{{ route.name }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Bottom Row: Period / Date Filters -->
+    <div class="filters-row period-row">
+      <div class="period-granularity-tabs" role="tablist" aria-label="Granularidad temporal">
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'daily'"
+          (click)="setPeriod('daily')"
+        >
+          Diario
+        </button>
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'weekly'"
+          (click)="setPeriod('weekly')"
+        >
+          Semanal
+        </button>
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'monthly'"
+          (click)="setPeriod('monthly')"
+        >
+          Mensual
+        </button>
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'yearly'"
+          (click)="setPeriod('yearly')"
+        >
+          Anual
+        </button>
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'range'"
+          (click)="setPeriod('range')"
+        >
+          Rango
+        </button>
+        <button
+          type="button"
+          class="granularity-btn"
+          [class.active]="periodType() === 'all'"
+          (click)="setPeriod('all')"
+        >
+          Histórico
+        </button>
+      </div>
+
+      <!-- Navigation for Daily, Weekly, Monthly, Yearly -->
+      @if (periodType() !== 'range' && periodType() !== 'all') {
+        <div class="period-nav-controls">
+          <button
+            type="button"
+            class="btn-period-arrow"
+            (click)="navigatePeriod(-1)"
+            aria-label="Periodo anterior"
+            title="Anterior"
+          >
+            ‹
+          </button>
+
+          @if (periodType() === 'daily') {
+            <label class="period-date-picker">
+              <span class="period-text">{{ viewingText() }}</span>
+              <input
+                type="date"
+                class="hidden-date-input"
+                [value]="selectedDate() | date:'yyyy-MM-dd'"
+                (input)="selectDate($any($event.target).value)"
+                title="Seleccionar fecha"
+              />
+            </label>
+          } @else {
+            <span class="period-display-text">{{ viewingText() }}</span>
+          }
+
+          <button
+            type="button"
+            class="btn-period-arrow"
+            (click)="navigatePeriod(1)"
+            aria-label="Periodo siguiente"
+            title="Siguiente"
+          >
+            ›
+          </button>
+        </div>
+      }
+
+      <!-- Custom Date Range Inputs -->
+      @if (periodType() === 'range') {
+        <div class="range-inputs-container">
+          <label class="range-field">
+            <span class="range-text">Desde:</span>
+            <input
+              type="date"
+              class="range-date-input"
+              [value]="rangeStartDate()"
+              (input)="setRangeStartDate($any($event.target).value)"
+            />
+          </label>
+          <label class="range-field">
+            <span class="range-text">Hasta:</span>
+            <input
+              type="date"
+              class="range-date-input"
+              [value]="rangeEndDate()"
+              (input)="setRangeEndDate($any($event.target).value)"
+            />
+          </label>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- KPI Balance Cards Grid -->
+  @if (balance(); as item) {
+    <section class="kpi-grid" aria-label="Métricas del balance financiero">
+      <!-- 1. Balance Neto -->
+      <article class="kpi-card net-card kpi-net" [class.negative]="item.netBalance < 0">
+        <div class="kpi-header">
+          <span class="kpi-title">Balance Neto</span>
+          <span class="kpi-badge" [class.badge-negative]="item.netBalance < 0">
+            {{ item.netBalance >= 0 ? 'Superávit' : 'Déficit' }}
+          </span>
+        </div>
+        <strong class="kpi-value">
+          {{ item.netBalance | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </strong>
+        <p class="kpi-footer">
+          {{ item.routeName }}
+        </p>
+      </article>
+
+      <!-- 2. Recaudos de Cartera -->
+      <article class="kpi-card positive-card kpi-collections">
+        <div class="kpi-header">
+          <span class="kpi-title">Recaudos / Cobros</span>
+          <span class="kpi-icon positive"><app-icon name="payment" /></span>
+        </div>
+        <strong class="kpi-value text-positive">
+          +{{ item.paymentCollections | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </strong>
+        <p class="kpi-footer">Cuotas cobradas de cartera</p>
+      </article>
+
+      <!-- 3. Ingresos e Inversiones -->
+      <article class="kpi-card positive-card kpi-incomes">
+        <div class="kpi-header">
+          <span class="kpi-title">Ingresos e Inversiones</span>
+          <span class="kpi-icon positive"><app-icon name="money" /></span>
+        </div>
+        <strong class="kpi-value text-positive">
+          +{{ item.incomeInvestments | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </strong>
+        <p class="kpi-footer">Inyecciones de capital y microseguros</p>
+      </article>
+
+      <!-- 4. Desembolsos de Préstamos -->
+      <article class="kpi-card negative-card kpi-loans">
+        <div class="kpi-header">
+          <span class="kpi-title">Préstamos / Colocación</span>
+          <span class="kpi-icon negative"><app-icon name="clipboard" /></span>
+        </div>
+        <strong class="kpi-value text-negative">
+          −{{ item.loanDisbursements | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </strong>
+        <p class="kpi-footer">Capital prestado entregado a clientes</p>
+      </article>
+
+      <!-- 5. Gastos Operativos -->
+      <article class="kpi-card negative-card kpi-expenses">
+        <div class="kpi-header">
+          <span class="kpi-title">Gastos Operativos</span>
+          <span class="kpi-icon negative"><app-icon name="bolt" /></span>
+        </div>
+        <strong class="kpi-value text-negative">
+          −{{ item.expenses | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </strong>
+        <p class="kpi-footer">Viáticos, gasolina y gastos de ruta</p>
+      </article>
+    </section>
+  }
+
+  <!-- Main Movements Workspace -->
+  <section class="movements-workspace">
+    <!-- Tabs Header -->
+    <div class="workspace-tabs-bar" role="tablist" aria-label="Secciones de movimientos">
+      <div class="tabs-group">
+        <button
+          type="button"
+          class="tab-btn tab-income"
+          [class.active]="activeTab() === 'income'"
+          (click)="setTab('income')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'income'"
+        >
+          <span class="tab-head">
+            <span class="tab-icon"><app-icon name="payment" /></span>
+            <span class="tab-label">Ingresos y Cobros</span>
+            <span class="tab-count">{{ incomeCount() }}</span>
+          </span>
+          <span class="tab-amount text-positive">+{{ incomeSubtotal() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="tab-btn tab-expense"
+          [class.active]="activeTab() === 'expense'"
+          (click)="setTab('expense')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'expense'"
+        >
+          <span class="tab-head">
+            <span class="tab-icon"><app-icon name="money" /></span>
+            <span class="tab-label">Gastos y Préstamos</span>
+            <span class="tab-count">{{ expenseCount() }}</span>
+          </span>
+          <span class="tab-amount text-negative">−{{ expenseSubtotal() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="tab-btn tab-all"
+          [class.active]="activeTab() === 'all'"
+          (click)="setTab('all')"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'all'"
+        >
+          <span class="tab-head">
+            <span class="tab-icon"><app-icon name="diamond" /></span>
+            <span class="tab-label">Todos los Movimientos</span>
+            <span class="tab-count">{{ allCount() }}</span>
+          </span>
+          <span class="tab-amount" [class.text-positive]="netPeriod() >= 0" [class.text-negative]="netPeriod() < 0">
+            Neto: {{ netPeriod() | currency:'COP':'symbol-narrow':'1.0-0' }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Quick Action: Registrar Movimiento -->
+      <button
+        type="button"
+        class="btn-new-record"
+        (click)="openCreateModal(activeTab() === 'expense' ? 'Expense' : 'Income')"
+      >
+        <span class="btn-icon"><app-icon name="plus" /></span>
+        <span>Registrar en esta sección</span>
+      </button>
+    </div>
+
+    <!-- Table Toolbar: Search, Category Filter & Page Size -->
+    <div class="table-toolbar">
+      <div class="toolbar-search">
+        <span class="search-icon"><app-icon name="search" /></span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Buscar por concepto, cliente, usuario, ruta o monto…"
+          [value]="searchQuery()"
+          (input)="onSearchChange($event)"
+          aria-label="Buscar movimientos"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="btn-clear-search" (click)="searchQuery.set(''); currentPage.set(1)" aria-label="Limpiar búsqueda">✕</button>
+        }
+      </div>
+
+      <div class="toolbar-filters">
+        <label class="toolbar-field">
+          <span class="field-label">Categoría:</span>
+          <select
+            class="toolbar-select"
+            [value]="selectedCategory()"
+            (change)="setCategory($any($event.target).value)"
+          >
+            <option value="all">Todas las categorías</option>
+            <option value="Payment">Solo Cobros de cuotas</option>
+            <option value="Loan">Solo Desembolsos de préstamos</option>
+            <option value="Income">Solo Ingresos de caja</option>
+            <option value="Investment">Solo Inversiones</option>
+            <option value="Expense">Solo Gastos operativos</option>
+            <option value="Microinsurance">Solo Microseguros</option>
+          </select>
+        </label>
+
+        <label class="toolbar-field">
+          <span class="field-label">Mostrar:</span>
+          <select
+            class="toolbar-select"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            @for (size of pageSizeOptions; track size) {
+              <option [value]="size">{{ size }} por pág.</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- Movements Table -->
+    <div class="table-card">
+      <table class="movements-table" aria-label="Listado de movimientos financieros">
+        <thead>
+          <tr>
+            <th scope="col" class="th-date">Fecha y Hora</th>
+            <th scope="col" class="th-route">Ruta</th>
+            <th scope="col" class="th-type">Tipo</th>
+            <th scope="col" class="th-concept">Concepto / Detalle</th>
+            <th scope="col" class="th-user">Registrado por</th>
+            <th scope="col" class="th-amount text-right">Monto</th>
+            <th scope="col" class="th-actions text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loadingMovements()) {
+            <tr>
+              <td colspan="7" class="td-state">
+                <div class="state-loading">
+                  <span class="spinner"><app-icon name="refresh" /></span>
+                  <span>Cargando movimientos financieros…</span>
+                </div>
+              </td>
+            </tr>
+          } @else if (paginatedMovements().length === 0) {
+            <tr>
+              <td colspan="7" class="td-state">
+                <div class="state-empty">
+                  <span class="empty-icon">📂</span>
+                  <strong>No se encontraron movimientos para los filtros seleccionados</strong>
+                  <p>Prueba ajustando el rango de fechas, seleccionando otra ruta o registrando un nuevo movimiento.</p>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (item of paginatedMovements(); track item.id) {
+              <tr class="movement-row" [class.expense-row]="item.section === 'expense'">
+                <td class="td-date">
+                  <span class="date-main">{{ item.date | date:'dd/MM/yyyy' }}</span>
+                  <span class="date-time">{{ item.date | date:'hh:mm a' }}</span>
+                </td>
+                <td class="td-route">
+                  <span class="route-tag">{{ item.routeName }}</span>
+                </td>
+                <td class="td-type">
+                  <span class="badge" [class]="'badge-' + item.badgeClass">
+                    {{ item.badge }}
+                  </span>
+                </td>
+                <td class="td-concept">
+                  <strong class="concept-title">{{ item.concept }}</strong>
+                  @if (item.description) {
+                    <p class="concept-desc">{{ item.description }}</p>
+                  }
+                </td>
+                <td class="td-user">
+                  <span class="user-text">{{ item.createdBy }}</span>
+                </td>
+                <td class="td-amount text-right">
+                  <strong
+                    class="amount-value"
+                    [class.text-positive]="item.section === 'income'"
+                    [class.text-negative]="item.section === 'expense'"
+                  >
+                    {{ item.section === 'income' ? '+' : '−' }}{{ item.amount | currency:'COP':'symbol-narrow':'1.0-0' }}
+                  </strong>
+                </td>
+                <td class="td-actions text-center">
+                  @if (item.canEdit && item.rawEntry) {
+                    <button
+                      type="button"
+                      class="btn-row-action"
+                      (click)="openEditModal(item.rawEntry)"
+                      title="Modificar movimiento manual"
+                    >
+                      Modificar
+                    </button>
+                  } @else {
+                    <span class="text-muted-dash">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Pagination Footer -->
+    @if (!loadingMovements() && tabMovements().length > 0) {
+      <div class="pagination-footer">
+        <div class="pagination-info">
+          <span>Mostrando del <strong>{{ startIndex() }}</strong> al <strong>{{ endIndex() }}</strong> de <strong>{{ tabMovements().length }}</strong> movimientos</span>
+        </div>
+
+        <div class="pagination-controls" role="navigation" aria-label="Paginación de resultados">
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(1)"
+            title="Primera página"
+          >
+            «
+          </button>
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === 1"
+            (click)="prevPage()"
+            title="Página anterior"
+          >
+            ‹
+          </button>
+
+          @for (page of pageNumbers(); track page) {
+            <button
+              type="button"
+              class="btn-page-num"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)"
+              [attr.aria-current]="page === currentPage() ? 'page' : null"
+            >
+              {{ page }}
+            </button>
+          }
+
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === totalPages()"
+            (click)="nextPage()"
+            title="Página siguiente"
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            class="btn-page-nav"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(totalPages())"
+            title="Última página"
+          >
+            »
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Modal for Creating / Editing Manual Financial Entry -->
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()" aria-hidden="true"></div>
+    <div class="modal-container" role="dialog" aria-modal="true" [attr.aria-label]="modalMode() === 'create' ? 'Nuevo Movimiento' : 'Modificar Movimiento'">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            {{ modalMode() === 'create' ? 'Nuevo Movimiento Financiero' : 'Modificar Movimiento Financiero' }}
+          </h3>
+          <button type="button" class="btn-modal-close" (click)="closeModal()" aria-label="Cerrar modal">✕</button>
+        </div>
+
+        @if (modalError()) {
+          <div class="modal-error" role="alert">
+            {{ modalError() }}
+          </div>
+        }
+
+        <form [formGroup]="modalForm" (ngSubmit)="submitModal()" class="modal-form">
+          <!-- Route -->
+          <div class="form-group">
+            <label for="modal-route">Ruta destino</label>
+            <app-route-selector
+              selectId="modal-route"
+              formControlName="routeId"
+              [routes]="routes()"
+              [includeAllOption]="false"
+              placeholder="Selecciona una ruta"
+              ariaLabel="Ruta destino"
+            />
+          </div>
+
+          <!-- Type -->
+          <div class="form-group">
+            <label for="modal-type">Tipo de movimiento</label>
+            <select id="modal-type" formControlName="type" class="form-input">
+              <option value="Income">Ingreso de Caja (+)</option>
+              <option value="Investment">Inversión de Capital (+)</option>
+              <option value="Expense">Gasto Operativo (−)</option>
+            </select>
+          </div>
+
+          <!-- Concept -->
+          <div class="form-group">
+            <label for="modal-concept">Concepto</label>
+            <input
+              id="modal-concept"
+              type="text"
+              formControlName="concept"
+              class="form-input"
+              maxlength="160"
+              placeholder="Ej: Inyección de capital base, Gasolina moto 1, Viáticos…"
+            />
+          </div>
+
+          <!-- Amount -->
+          <div class="form-group">
+            <label for="modal-amount">Monto ($ COP)</label>
+            <input
+              id="modal-amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              formControlName="amount"
+              class="form-input"
+              placeholder="Ej: 50000"
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="modal-desc">Descripción o Justificación (Opcional)</label>
+            <textarea
+              id="modal-desc"
+              formControlName="description"
+              class="form-textarea"
+              rows="3"
+              maxlength="1000"
+              placeholder="Detalles adicionales del movimiento para auditoría…"
+            ></textarea>
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="saving()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-save" [disabled]="saving() || modalForm.invalid">
+              {{ saving() ? 'Guardando…' : modalMode() === 'create' ? 'Guardar Movimiento' : 'Guardar Cambios' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 </div>

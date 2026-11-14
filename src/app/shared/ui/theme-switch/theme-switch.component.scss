@@ -1,2 +1,46 @@
-button { border: 0.0625rem solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); color: var(--color-text); background: var(--color-surface-raised); cursor: pointer; }
-button:hover { border-color: var(--color-primary); }
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: 2.125rem;
+  padding: 0 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+
+  .theme-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  .theme-text {
+    line-height: 1;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .btn-theme-toggle {
+    width: 2.125rem;
+    padding: 0;
+    .theme-text {
+      display: none;
+    }
+  }
+}

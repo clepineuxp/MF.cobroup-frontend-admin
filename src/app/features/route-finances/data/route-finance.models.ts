@@ -1,5 +1,26 @@
-export type RouteFinancialEntryType = 'Income' | 'Investment' | 'Expense';
+export type RouteFinancialEntryType = 'Income' | 'Investment' | 'Expense' | 'Microinsurance';
 export type RouteFinanceSection = 'income-investments' | 'expenses' | 'all';
+export type FilterPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'range' | 'all';
+
+export type MovementSection = 'income' | 'expense';
+export type MovementBadgeClass = 'income' | 'investment' | 'payment' | 'loan' | 'expense' | 'microinsurance';
+
+export interface FinancialMovementItem {
+  readonly id: string;
+  readonly routeId: string;
+  readonly routeName: string;
+  readonly section: MovementSection;
+  readonly type: string;
+  readonly badge: string;
+  readonly badgeClass: MovementBadgeClass;
+  readonly concept: string;
+  readonly description?: string | null;
+  readonly amount: number;
+  readonly date: Date;
+  readonly createdBy: string;
+  readonly canEdit: boolean;
+  readonly rawEntry?: RouteFinancialEntry;
+}
 
 export interface RouteBalance {
   readonly routeId: string; readonly routeName: string; readonly initialBalance: number;
