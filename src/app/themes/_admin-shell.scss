@@ -1,18 +1,17 @@
 app-main-layout {
   background: radial-gradient(ellipse at top right, var(--color-primary-soft), transparent 55%), var(--color-background);
-  .app-main-content { max-width: 84rem; }
-  .app-main-content :is(.panel, .card, .table-card, .directory, .workspace > form) { border-radius: 1.25rem; box-shadow: var(--shadow-raised); }
-  .app-main-content button { border-radius: 999px; transition: background .15s, box-shadow .15s; }
-  .app-main-content :is(input, select, textarea) { border-radius: .75rem; }
-  .app-main-content :is(button, a, input, select, textarea):focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
-  .app-main-content .auth-card { border-radius: 1.5rem; box-shadow: var(--shadow-floating); background: linear-gradient(145deg, var(--color-surface), var(--color-primary-soft)); }
-  .app-main-content th { background: var(--color-surface-raised); color: var(--color-text-muted); }
-  .app-main-content tbody tr:hover { background: var(--color-primary-soft); }
-  .app-main-content .table-card { overflow-x: auto; }
+  :is(.panel, .card, .table-card, .directory, .workspace > form) { border-radius: 1.25rem; box-shadow: var(--shadow-raised); }
+  :is(.app-main-content, .admin-main-viewport) button { border-radius: 999px; transition: background .15s, box-shadow .15s; }
+  :is(.app-main-content, .admin-main-viewport) :is(input, select, textarea) { border-radius: .75rem; }
+  :is(.app-main-content, .admin-main-viewport) :is(button, a, input, select, textarea):focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+  :is(.app-main-content, .admin-main-viewport) .auth-card { border-radius: 1.5rem; box-shadow: var(--shadow-floating); background: linear-gradient(145deg, var(--color-surface), var(--color-primary-soft)); }
+  :is(.app-main-content, .admin-main-viewport) th { background: var(--color-surface-raised); color: var(--color-text-muted); }
+  :is(.app-main-content, .admin-main-viewport) tbody tr:hover { background: var(--color-primary-soft); }
+  :is(.app-main-content, .admin-main-viewport) .table-card { overflow-x: auto; }
 }
 
 
-app-main-layout .app-main-content {
+app-main-layout :is(.app-main-content, .admin-main-viewport) {
   .workspace:has(> .directory), .workspace:has(> .catalog), .workspace:has(> .routes) { grid-template-columns: minmax(0, 1fr); }
   .new-record { margin-bottom: 1.25rem; padding: .85rem 1.25rem; background: var(--color-primary); color: var(--color-on-primary); border: 0; font-weight: 700; cursor: pointer; }
   .editable-record { cursor: pointer; transition: background .15s; }
@@ -25,4 +24,4 @@ app-main-layout .app-main-content {
   app-editor-dialog .fields { min-width: 0; }
 }
 
-app-main-layout .app-main-content app-users-page app-editor-dialog form { padding: 0; border: 0; box-shadow: none; }
+app-main-layout :is(.app-main-content, .admin-main-viewport) app-users-page app-editor-dialog form { padding: 0; border: 0; box-shadow: none; }

@@ -1,111 +1,279 @@
-<div class="loans-page">
-  <header class="page-heading">
-    <div>
-      <p class="eyebrow">Auditoría y Supervisión</p>
-      <h2>Cartera y Préstamos</h2>
-      <p class="meta">Supervisión centralizada de créditos y cronogramas de amortización entre rutas operativas.</p>
-    </div>
-  </header>
+<div class="admin-records loans-page-layout">
+  <!-- Sticky Header and Search Toolbar -->
+  <div class="loans-sticky-top">
+    <header class="records-heading">
+      <div class="heading-title-row">
+        <h2 id="loans-title">Cartera y Préstamos</h2>
+        <span class="records-total">{{ totalCount() }} {{ totalCount() === 1 ? 'crédito' : 'créditos' }}</span>
+      </div>
+    </header>
 
-  @if (error()) {
-    <div class="message error" role="alert">{{ error() }}</div>
-  }
+    <!-- Filters Toolbar -->
+    <form class="filters-toolbar" (ngSubmit)="onSearchSubmit()">
+      <div class="filter-field route-filter">
+        <label for="route-filter-select">Ruta</label>
+        <div class="select-wrapper">
+          <app-route-selector
+            selectId="route-filter-select"
+            [routes]="routes()"
+            [(ngModel)]="filterRouteId"
+            name="route"
+            allLabel="Todas las rutas"
+            ariaLabel="Filtrar préstamos por ruta"
+            (valueChange)="onRouteFilterChange($event)"
+          />
+        </div>
+      </div>
 
-  <section class="filters-bar">
-    <div class="filter-group">
-      <label for="route-filter">Ruta operativa:</label>
-      <select id="route-filter" (change)="setRouteFilter($event)">
-        <option value="">Todas las rutas</option>
-        @for (route of routes(); track route.id) {
-          <option [value]="route.id">{{ route.name }}</option>
+      <div class="filter-field search-filter">
+        <label for="loan-search-input">Buscar crédito, cliente o fecha</label>
+        <div class="search-input-wrapper">
+          <span class="search-icon" aria-hidden="true"><app-icon name="search" /></span>
+          <input
+            id="loan-search-input"
+            name="search"
+            [(ngModel)]="searchTerm"
+            placeholder="Cliente, fecha (YYYY-MM-DD), código de préstamo..."
+            autocomplete="off"
+          />
+          @if (searchTerm) {
+            <button
+              type="button"
+              class="btn-clear-search"
+              (click)="clearSearch()"
+              title="Borrar búsqueda"
+              aria-label="Borrar búsqueda"
+            >
+              ✕
+            </button>
+          }
+        </div>
+      </div>
+
+      <button class="btn-search-action" type="submit" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner-sm" aria-hidden="true"></span>
+        } @else {
+          <app-icon name="search" />
         }
-      </select>
+        Buscar
+      </button>
+    </form>
+
+    <!-- Status Pills and Meta Bar -->
+    <div class="status-pills-bar">
+      <div class="status-pills">
+        <button
+          type="button"
+          [class.active]="statusFilter() === ''"
+          (click)="setStatusFilter('')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          [class.active]="statusFilter() === 'Active'"
+          (click)="setStatusFilter('Active')"
+        >
+          Activos
+        </button>
+        <button
+          type="button"
+          [class.active]="statusFilter() === 'PaidOff'"
+          (click)="setStatusFilter('PaidOff')"
+        >
+          Liquidados
+        </button>
+        <button
+          type="button"
+          [class.active]="statusFilter() === 'Cancelled'"
+          (click)="setStatusFilter('Cancelled')"
+        >
+          Cancelados
+        </button>
+      </div>
+
+      <div class="records-meta-bar">
+        <span class="records-counter-tag">
+          Mostrando {{ visibleLoans().length }} de {{ filteredLoans().length }} créditos
+          @if (filteredLoans().length !== totalCount()) {
+            ({{ totalCount() }} en total)
+          }
+        </span>
+        @if (filterRouteId || statusFilter() || searchTerm) {
+          <button type="button" class="btn-clear-filters" (click)="resetFilters()">
+            Limpiar filtros
+          </button>
+        }
+      </div>
     </div>
+  </div>
 
-    <div class="status-pills">
-      <button type="button" [class.active]="statusFilter() === ''" (click)="setStatusFilter('')">Todos</button>
-      <button type="button" [class.active]="statusFilter() === 'Active'" (click)="setStatusFilter('Active')">Activos</button>
-      <button type="button" [class.active]="statusFilter() === 'PaidOff'" (click)="setStatusFilter('PaidOff')">Liquidados</button>
-      <button type="button" [class.active]="statusFilter() === 'Cancelled'" (click)="setStatusFilter('Cancelled')">Cancelados</button>
-    </div>
-  </section>
-
-  @if (loading() && items().length === 0) {
-    <div class="state-message">Cargando cartera de préstamos...</div>
-  } @else if (items().length === 0) {
-    <div class="state-message">No se encontraron préstamos registrados para los filtros seleccionados.</div>
-  } @else {
-    <div class="loans-grid">
-      @for (loan of items(); track loan.id) {
-        <article class="loan-card" (click)="viewLoan(loan.id)" tabindex="0" (keyup.enter)="viewLoan(loan.id)">
-          <div class="card-header">
-            <div>
-              <h3>{{ loan.customerName }}</h3>
-              <span class="frequency-badge">{{ loan.paymentFrequency === 'Monthly' ? 'Mensual' : loan.paymentFrequency }} · {{ loan.installmentCount }} cuotas</span>
-            </div>
-            <span class="status-badge" [ngClass]="'status-' + loan.status.toLowerCase()">
-              {{ loan.status === 'Active' ? 'Activo' : (loan.status === 'PaidOff' ? 'Liquidado' : 'Cancelado') }}
-            </span>
-          </div>
-
-          <div class="card-metrics">
-            <div class="metric">
-              <span class="metric-label">Principal</span>
-              <span class="metric-val">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-            </div>
-            <div class="metric">
-              <span class="metric-label">Tasa</span>
-              <span class="metric-val">{{ loan.interestRate }}%</span>
-            </div>
-            <div class="metric highlight">
-              <span class="metric-label">Saldo</span>
-              <span class="metric-val">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-            </div>
-          </div>
-
-          <div class="card-footer">
-            <span class="due-info">Vencimiento: {{ loan.dueAtUtc | date:'mediumDate' }}</span>
-            <span class="view-link">Inspeccionar cronograma →</span>
-          </div>
-        </article>
-      }
-    </div>
+  @if (error() && !selectedLoan()) {
+    <p class="alert-msg error" role="alert">
+      <app-icon name="bolt" /> {{ error() }}
+    </p>
   }
+
+  <!-- Loans Scroll Area -->
+  <div class="loans-scroll-area">
+    @if (loading() && items().length === 0) {
+      <div class="loading-state">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Cargando cartera de préstamos…</p>
+      </div>
+    } @else if (filteredLoans().length === 0) {
+      <div class="empty-state">
+        <app-icon name="money" />
+        <p>No se encontraron préstamos registrados para los filtros seleccionados.</p>
+        @if (filterRouteId || statusFilter() || searchTerm) {
+          <button type="button" class="btn-text-action" (click)="resetFilters()">
+            Restablecer filtros
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="record-grid">
+        @for (loan of visibleLoans(); track loan.id) {
+          <article
+            class="record-card loan-record"
+            (click)="viewLoan(loan.id)"
+            tabindex="0"
+            (keyup.enter)="viewLoan(loan.id)"
+          >
+            <div class="record-top">
+              <span class="record-avatar" aria-hidden="true">
+                {{ getCustomerInitials(loan.customerName) }}
+              </span>
+              <div class="record-top-badges">
+                <span class="frequency-tag">
+                  {{ formatFrequency(loan.paymentFrequency) }} · {{ loan.installmentCount }} c.
+                </span>
+                <span class="status-badge" [ngClass]="'status-' + loan.status.toLowerCase()">
+                  {{ formatStatus(loan.status) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="record-header-info">
+              <h3 class="record-title">{{ loan.customerName }}</h3>
+              <p class="record-route">
+                <app-icon name="route" />
+                {{ getRouteName(loan.routeId) }}
+              </p>
+            </div>
+
+            <div class="card-metrics">
+              <div class="metric">
+                <span class="metric-label">Principal</span>
+                <span class="metric-val">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Tasa</span>
+                <span class="metric-val">{{ loan.interestRate }}%</span>
+              </div>
+              <div class="metric highlight">
+                <span class="metric-label">Saldo</span>
+                <span class="metric-val">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <div class="card-footer-info">
+              <div class="date-info">
+                <span class="date-label">Vencimiento:</span>
+                <span class="date-val">{{ loan.dueAtUtc | date:'mediumDate' }}</span>
+              </div>
+              <button
+                type="button"
+                class="loan-open-btn"
+                (click)="viewLoan(loan.id); $event.stopPropagation()"
+              >
+                <span>Inspeccionar cronograma</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Ver más button -->
+      @if (hasMoreCards()) {
+        <div class="load-more-container">
+          <button
+            type="button"
+            class="btn-load-more"
+            (click)="loadMore()"
+            [disabled]="loadingMore()"
+          >
+            @if (loadingMore()) {
+              <span class="spinner-sm" aria-hidden="true"></span>
+              Cargando más préstamos…
+            } @else {
+              <app-icon name="plus" />
+              Ver más préstamos ({{ remainingCount() }} restantes)
+            }
+          </button>
+        </div>
+      }
+    }
+  </div>
 
   <!-- Loan Detail Inspection Modal -->
   @if (selectedLoan(); as loan) {
-    <div class="modal-backdrop" (click)="closeDetail()">
-      <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <div>
-            <p class="eyebrow">Inspección de Cartera</p>
-            <h3>{{ loan.customerName }}</h3>
-            <p class="meta">Ruta: {{ loan.routeName }} · Creado por: {{ loan.createdByRole }} · {{ loan.createdAtUtc | date:'medium' }}</p>
-          </div>
-          <button type="button" class="btn-close" (click)="closeDetail()">✕</button>
+    <div class="loan-modal-overlay" (click)="closeDetail()" aria-hidden="true"></div>
+    <div
+      class="loan-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-loan-title"
+    >
+      <header class="modal-header">
+        <div>
+          <p class="modal-eyebrow">SUPERVISIÓN Y CRONOGRAMA DE CRÉDITO</p>
+          <h3 id="modal-loan-title">{{ loan.customerName }}</h3>
+          <span class="modal-subtitle">
+            Ruta: {{ loan.routeName }} · Creado por: {{ loan.createdByRole }} · {{ loan.createdAtUtc | date:'medium' }}
+          </span>
         </div>
+        <button
+          type="button"
+          class="btn-modal-close"
+          (click)="closeDetail()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </header>
 
-        <div class="detail-metrics">
-          <div class="term-box">
-            <span class="term-label">Principal</span>
-            <span class="term-value">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+      <div class="modal-body">
+        <div class="detail-metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Principal</span>
+            <span class="metric-value">{{ loan.principalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
           </div>
-          <div class="term-box">
-            <span class="term-label">Tasa de interés</span>
-            <span class="term-value">{{ loan.interestRate }}%</span>
+          <div class="metric-card">
+            <span class="metric-label">Tasa de interés</span>
+            <span class="metric-value">{{ loan.interestRate }}%</span>
           </div>
-          <div class="term-box">
-            <span class="term-label">Monto Total</span>
-            <span class="term-value">{{ loan.totalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          <div class="metric-card">
+            <span class="metric-label">Monto Total</span>
+            <span class="metric-value">{{ loan.totalAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
           </div>
-          <div class="term-box highlight">
-            <span class="term-label">Saldo Pendiente</span>
-            <span class="term-value">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          <div class="metric-card">
+            <span class="metric-label">Total Pagado</span>
+            <span class="metric-value">{{ loan.paidAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="metric-card highlight">
+            <span class="metric-label">Saldo Pendiente</span>
+            <span class="metric-value">{{ loan.balanceAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
           </div>
         </div>
 
         <div class="schedule-section">
-          <h4>Amortización y Cronograma ({{ loan.installments.length }} cuotas)</h4>
+          <div class="schedule-header">
+            <h4>Amortización y Cronograma ({{ loan.installments.length }} cuotas)</h4>
+            <span class="frequency-tag">{{ formatFrequency(loan.paymentFrequency) }}</span>
+          </div>
           <div class="table-container">
             <table class="schedule-table">
               <thead>
@@ -120,7 +288,7 @@
               <tbody>
                 @for (inst of loan.installments; track inst.number) {
                   <tr>
-                    <td>{{ inst.number }}</td>
+                    <td class="col-num">{{ inst.number }}</td>
                     <td>{{ inst.dueDate }}</td>
                     <td>{{ inst.expectedAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
                     <td>{{ inst.paidAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
@@ -135,10 +303,10 @@
             </table>
           </div>
         </div>
+      </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" (click)="closeDetail()">Cerrar</button>
-        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeDetail()">Cerrar</button>
       </div>
     </div>
   }

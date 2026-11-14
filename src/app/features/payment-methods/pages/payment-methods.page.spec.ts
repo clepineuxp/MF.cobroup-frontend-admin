@@ -11,6 +11,12 @@ describe('Admin PaymentMethodsPage', () => {
     create: vi.fn(),
     update: vi.fn(),
     toggleStatus: vi.fn(),
+    delete: vi.fn(),
+    listReasons: vi.fn(),
+    createReason: vi.fn(),
+    updateReason: vi.fn(),
+    toggleReasonStatus: vi.fn(),
+    deleteReason: vi.fn(),
   };
 
   beforeEach(() => {
@@ -40,6 +46,16 @@ describe('Admin PaymentMethodsPage', () => {
       },
     ]);
 
+    paymentMethodsServiceMock.listReasons.mockResolvedValue([
+      {
+        id: 'r-1',
+        name: 'Cliente ausente',
+        description: 'No se encontraba en el domicilio',
+        displayOrder: 1,
+        isActive: true,
+      },
+    ]);
+
     paymentMethodsServiceMock.toggleStatus.mockResolvedValue({
       id: 'pm-2',
       name: 'Transferencia Bancaria',
@@ -48,6 +64,16 @@ describe('Admin PaymentMethodsPage', () => {
       createdAtUtc: '2026-10-21T00:00:00Z',
       updatedAtUtc: '2026-10-21T00:00:00Z',
     });
+
+    paymentMethodsServiceMock.delete.mockResolvedValue(undefined);
+    paymentMethodsServiceMock.createReason.mockResolvedValue({
+      id: 'r-2',
+      name: 'Sin dinero hoy',
+      description: 'Promete pagar mañana',
+      displayOrder: 2,
+      isActive: true,
+    });
+    paymentMethodsServiceMock.deleteReason.mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [PaymentMethodsPage],
@@ -106,5 +132,31 @@ describe('Admin PaymentMethodsPage', () => {
     fail(new Error('Nombre duplicado')); await pending; await fixture.whenStable();
     expect(component.showModal()).toBe(true);
     expect(fixture.nativeElement.querySelector('dialog [role="alert"]').textContent).toContain('duplicado');
+  });
+
+  it('switches to non-payment reasons tab and supports mini-crud operations', async () => {
+    await fixture.whenStable();
+    component.selectTab('non-payment-reasons');
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe('non-payment-reasons');
+    expect(fixture.nativeElement.textContent).toContain('Cliente ausente');
+
+    component.openCreateReason();
+    expect(component.showReasonModal()).toBe(true);
+    component.reasonForm.setValue({
+      name: 'Sin dinero hoy',
+      description: 'Promete pagar mañana',
+      displayOrder: 2,
+    });
+    await component.saveReason();
+    expect(paymentMethodsServiceMock.createReason).toHaveBeenCalledWith({
+      name: 'Sin dinero hoy',
+      description: 'Promete pagar mañana',
+      displayOrder: 2,
+    });
+
+    await component.deleteReason(component.reasons()[0]);
+    expect(paymentMethodsServiceMock.deleteReason).toHaveBeenCalledWith('r-1');
   });
 });

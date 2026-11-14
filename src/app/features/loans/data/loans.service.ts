@@ -13,12 +13,14 @@ export class LoansService {
     customerId?: string,
     status?: string,
     page = 1,
-    pageSize = 25
+    pageSize = 12,
+    search?: string
   ): Promise<LoanSearchResponse> {
     const params = new URLSearchParams({ page: page.toString(), pageSize: pageSize.toString() });
     if (routeId) params.append('routeId', routeId);
     if (customerId) params.append('customerId', customerId);
     if (status) params.append('status', status);
+    if (search?.trim()) params.append('search', search.trim());
 
     const response = await this.auth.authorizedFetch(
       `${this.config.identityBaseUrl}/api/v1/loans?${params.toString()}`

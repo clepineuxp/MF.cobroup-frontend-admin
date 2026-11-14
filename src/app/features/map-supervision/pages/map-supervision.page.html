@@ -6,12 +6,13 @@
     </div>
 
     <form [formGroup]="filterForm" (ngSubmit)="loadMapLocations()" class="filters-form">
-      <select formControlName="routeId" (change)="loadMapLocations()" aria-label="Seleccionar ruta">
-        <option value="">Todas las rutas</option>
-        @for (route of routes(); track route.id) {
-          <option [value]="route.id">{{ route.name }}</option>
-        }
-      </select>
+      <app-route-selector
+        formControlName="routeId"
+        [routes]="routes()"
+        allLabel="Todas las rutas"
+        ariaLabel="Seleccionar ruta"
+        (valueChange)="onRouteChange($event)"
+      />
       <input type="date" formControlName="date" (change)="loadMapLocations()" aria-label="Fecha de corte" />
     </form>
   </div>

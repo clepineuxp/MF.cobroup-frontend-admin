@@ -1,0 +1,123 @@
+<div class="route-selector-container" [class.open]="isOpen()" [class.disabled]="disabled">
+  <button
+    type="button"
+    class="route-selector-trigger"
+    [id]="selectId || null"
+    [disabled]="disabled"
+    [attr.aria-label]="ariaLabel"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="listbox"
+    (click)="toggleDropdown()"
+  >
+    <span class="trigger-main">
+      <span class="trigger-icon" aria-hidden="true">
+        <app-icon name="route" />
+      </span>
+      <span class="trigger-label" [class.is-placeholder]="!selectedRoute() && !includeAllOption">
+        {{ displayLabel() }}
+      </span>
+    </span>
+
+    <span class="trigger-meta">
+      @if (routes.length > 0) {
+        <span class="routes-total-pill" title="Total de rutas disponibles">{{ routes.length }}</span>
+      }
+      <span class="trigger-chevron" [class.rotated]="isOpen()" aria-hidden="true">▾</span>
+    </span>
+  </button>
+
+  @if (isOpen()) {
+    <div class="route-selector-dropdown" role="listbox" [attr.aria-label]="ariaLabel">
+      <!-- Buscador interno de rutas -->
+      <div class="dropdown-search-header">
+        <div class="dropdown-search-box">
+          <span class="search-icon" aria-hidden="true">
+            <app-icon name="search" />
+          </span>
+          <input
+            #searchInput
+            type="text"
+            class="route-search-input"
+            [placeholder]="searchPlaceholder"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+            (keydown)="onSearchKeydown($event)"
+            autocomplete="off"
+            aria-label="Filtrar rutas"
+          />
+          @if (searchQuery()) {
+            <button
+              type="button"
+              class="btn-clear-query"
+              (click)="clearSearch($event)"
+              title="Limpiar filtro"
+              aria-label="Limpiar filtro de ruta"
+            >
+              ✕
+            </button>
+          }
+        </div>
+        <div class="dropdown-meta-row">
+          <span class="dropdown-count">
+            @if (searchQuery().trim()) {
+              {{ filteredRoutes().length }} de {{ routes.length }} rutas
+            } @else {
+              {{ routes.length }} {{ routes.length === 1 ? 'ruta disponible' : 'rutas disponibles' }}
+            }
+          </span>
+        </div>
+      </div>
+
+      <!-- Lista de opciones con scroll (soporta 200+ rutas cómodamente) -->
+      <div class="dropdown-options-list">
+        @if (includeAllOption) {
+          <button
+            type="button"
+            role="option"
+            class="route-option all-routes-option"
+            [class.selected]="isAllSelected()"
+            [attr.aria-selected]="isAllSelected()"
+            (click)="selectOption(allValue)"
+          >
+            <div class="option-info">
+              <span class="option-name">{{ allLabel }}</span>
+              <span class="option-sub">Consolidado de todas las rutas</span>
+            </div>
+            @if (isAllSelected()) {
+              <span class="option-check" aria-hidden="true">✓</span>
+            }
+          </button>
+        }
+
+        @if (filteredRoutes().length === 0) {
+          <div class="dropdown-empty-state">
+            <p>No se encontraron rutas para <strong>«{{ searchQuery() }}»</strong></p>
+          </div>
+        } @else {
+          @for (route of filteredRoutes(); track route.id) {
+            <button
+              type="button"
+              role="option"
+              class="route-option"
+              [class.selected]="value === route.id"
+              [attr.aria-selected]="value === route.id"
+              (click)="selectOption(route.id)"
+            >
+              <div class="option-info">
+                <span class="option-name">{{ route.name }}</span>
+                @if (route.supervisor?.displayName; as sup) {
+                  <span class="option-sub">Supervisor: {{ sup }}</span>
+                } @else if (route.description) {
+                  <span class="option-sub">{{ route.description }}</span>
+                }
+              </div>
+              @if (value === route.id) {
+                <span class="option-check" aria-hidden="true">✓</span>
+              }
+            </button>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

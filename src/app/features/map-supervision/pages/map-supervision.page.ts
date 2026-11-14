@@ -2,20 +2,23 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MapPoint, MapViewComponent } from '../../../shared/ui/map-view/map-view.component';
+import { RouteSelectorComponent } from '../../../shared/ui/route-selector/route-selector.component';
 import { CollectionRoute } from '../../routes/data/route.models';
+import { RouteSelectionService } from '../../routes/data/route-selection.service';
 import { RoutesService } from '../../routes/data/routes.service';
 import { AdminMapLocation, MapSupervisionService } from '../data/map-supervision.service';
 
 @Component({
   selector: 'app-map-supervision-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MapViewComponent, CurrencyPipe],
+  imports: [CommonModule, ReactiveFormsModule, MapViewComponent, CurrencyPipe, RouteSelectorComponent],
   templateUrl: './map-supervision.page.html',
   styleUrl: './map-supervision.page.scss',
 })
 export class MapSupervisionPage implements OnInit {
   private readonly mapService = inject(MapSupervisionService);
   private readonly routesService = inject(RoutesService);
+  private readonly routeSelection = inject(RouteSelectionService);
 
   readonly routes = signal<readonly CollectionRoute[]>([]);
   readonly rawLocations = signal<readonly AdminMapLocation[]>([]);
@@ -25,7 +28,7 @@ export class MapSupervisionPage implements OnInit {
   readonly statusFilter = signal<'ALL' | 'OVERDUE' | 'DUE' | 'COLLECTED'>('ALL');
 
   readonly filterForm = new FormGroup({
-    routeId: new FormControl<string>('', { nonNullable: true }),
+    routeId: new FormControl<string>(this.routeSelection.selectedRouteId(), { nonNullable: true }),
     date: new FormControl<string>(new Date().toISOString().substring(0, 10), { nonNullable: true }),
   });
 
@@ -69,13 +72,22 @@ export class MapSupervisionPage implements OnInit {
     try {
       const list = await this.routesService.list();
       this.routes.set(list);
+      const validRoute = this.routeSelection.ensureValidRoute(list);
+      this.filterForm.controls.routeId.setValue(validRoute);
     } catch {
       // Non-blocking
     }
   }
 
+  onRouteChange(routeId: string): void {
+    this.filterForm.controls.routeId.setValue(routeId);
+    this.routeSelection.setSelectedRoute(routeId);
+    void this.loadMapLocations();
+  }
+
   async loadMapLocations(): Promise<void> {
     const routeId = this.filterForm.controls.routeId.value;
+    this.routeSelection.setSelectedRoute(routeId);
     const date = this.filterForm.controls.date.value;
 
     try {

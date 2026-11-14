@@ -1,11 +1,32 @@
 @if (context(); as current) {
-  <div class="organization-switcher">
-    <label for="organization-admin">Organización</label>
-    <select id="organization-admin" [value]="current.organizationId" [disabled]="busy()" (change)="select($event)">
-      @for (organization of organizations(); track organization.organizationId) {
-        <option [value]="organization.organizationId">{{ organization.organizationName }} · {{ organization.role }}</option>
-      }
-    </select>
-    @if (error()) { <p role="alert">{{ error() }}</p> }
-  </div>
+  @if (hasMultipleOrganizations()) {
+    <div class="switcher-container">
+      <div class="header-sep" aria-hidden="true"></div>
+      <div class="organization-switcher">
+        <label for="organization-admin" class="switcher-label">
+          <span class="switcher-icon" aria-hidden="true">🏢</span>
+          <span class="switcher-text">Org:</span>
+        </label>
+        <div class="switcher-select-wrap">
+          <select
+            id="organization-admin"
+            [value]="current.organizationId"
+            [disabled]="busy()"
+            (change)="select($event)"
+            title="Cambiar organización"
+          >
+            @for (organization of organizations(); track organization.organizationId) {
+              <option [value]="organization.organizationId">
+                {{ organization.organizationName }} ({{ organization.role }})
+              </option>
+            }
+          </select>
+          <span class="switcher-chevron" aria-hidden="true">▾</span>
+        </div>
+        @if (error()) {
+          <div class="switcher-error-tooltip" role="alert">{{ error() }}</div>
+        }
+      </div>
+    </div>
+  }
 }

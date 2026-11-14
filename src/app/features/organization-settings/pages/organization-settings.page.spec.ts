@@ -5,8 +5,10 @@ import { OrganizationSettingsPage } from './organization-settings.page';
 
 describe('OrganizationSettingsPage', () => {
   const current = {
-    timeZoneId: 'America/Bogota', currencyCode: 'COP',
-    maxActiveCustomersPerRoute: 100, maxActiveLoansPerRoute: null,
+    timeZoneId: 'America/Bogota',
+    currencyCode: 'COP',
+    maxActiveCustomersPerRoute: 100,
+    maxActiveLoansPerRoute: null,
     dailyClosingTimeUtc: '09:00:00',
     enforceDailyClosingSchedule: true,
     updatedAtUtc: new Date().toISOString(),
@@ -57,5 +59,23 @@ describe('OrganizationSettingsPage', () => {
     expect(utc).toBe('09:00:00');
     const local = page.convertUtcTimeToLocal('09:00:00', 'America/Bogota');
     expect(local).toBe('04:00');
+  });
+
+  it('supports selecting currency presets and toggling unlimited limits', async () => {
+    const fixture = TestBed.createComponent(OrganizationSettingsPage);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+
+    page.selectCurrency('USD');
+    expect(page.form.controls.currencyCode.value).toBe('USD');
+
+    page.setCustomersUnlimited(true);
+    expect(page.form.controls.maxActiveCustomersPerRoute.value).toBeNull();
+
+    page.setCustomersUnlimited(false);
+    expect(page.form.controls.maxActiveCustomersPerRoute.value).toBe(200);
+
+    page.setLoansUnlimited(true);
+    expect(page.form.controls.maxActiveLoansPerRoute.value).toBeNull();
   });
 });

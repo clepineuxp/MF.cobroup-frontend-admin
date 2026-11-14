@@ -1,129 +1,645 @@
-<div class="admin-records">
-<header class="records-heading" aria-labelledby="routes-title"><div><p class="records-eyebrow">CONFIGURACIÓN OPERATIVA</p><h2 id="routes-title">Rutas de cobro</h2><p class="records-description">Organiza tu equipo, recorridos y cupos de cobro.</p></div><button type="button" class="new-record" (click)="openCreate()" [disabled]="saving() || loading()">+ Nueva ruta</button></header>
-
-@if (error() && !editorOpen()) { <p class="message error" role="alert">{{ error() }}</p> }
-@if (success()) { <p class="message success" role="status">{{ success() }}</p> }
-
-@if (editorOpen()) {
-  <app-editor-dialog [title]="editingRouteId() ? 'Editar ruta' : 'Nueva ruta'" [busy]="saving()" [error]="error()" (dismiss)="closeEditor()">
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <label>Nombre <input formControlName="name" maxlength="120" autocomplete="off" /></label>
-      <label>Descripción <textarea formControlName="description" maxlength="500" rows="3"></textarea></label>
-      <label>Saldo inicial
-        <input type="number" step="0.01" formControlName="initialBalance" [readonly]="!!editingRouteId()" />
-        @if (editingRouteId()) { <small>El saldo inicial queda fijado al crear la ruta.</small> }
-      </label>
-      <label>Supervisor
-        <select formControlName="supervisorUserId">
-          <option value="">Selecciona un supervisor</option>
-          @for (user of supervisors(); track user.id) { <option [value]="user.id">{{ user.displayName }} · {{ user.username }}</option> }
-        </select>
-      </label>
-      @if (editingRouteId()) {
-        <label>Estado
-          <select formControlName="status"><option value="Active">Activa</option><option value="Inactive">Inactiva</option></select>
-        </label>
-      }
-      <label>Zona horaria de la ruta
-        <select formControlName="timeZoneId">
-          <option value="">Heredar de la organización</option>
-          <option value="America/Bogota">Bogotá, Lima, Quito (UTC−5)</option>
-          <option value="America/Sao_Paulo">São Paulo, Brasilia (UTC−3)</option>
-          <option value="America/Mexico_City">Ciudad de México (UTC−6)</option>
-          <option value="America/Santiago">Santiago de Chile (UTC−4/−3)</option>
-          <option value="America/Argentina/Buenos_Aires">Buenos Aires (UTC−3)</option>
-          <option value="America/Caracas">Caracas (UTC−4)</option>
-          <option value="America/La_Paz">La Paz (UTC−4)</option>
-          <option value="America/Guayaquil">Guayaquil (UTC−5)</option>
-          <option value="America/Panama">Panamá (UTC−5)</option>
-          <option value="America/Costa_Rica">Costa Rica (UTC−6)</option>
-          <option value="UTC">UTC (Tiempo Universal Coordinado)</option>
-        </select>
-        <small>Define en qué zona se calcula el "día hábil" de esta ruta.</small>
-      </label>
-      <fieldset>
-        <legend>Cobradores</legend>
-        @if (collectors().length === 0) { <p>No hay cobradores activos disponibles.</p> }
-        @for (user of collectors(); track user.id) {
-          <label class="check"><input type="checkbox" [checked]="selectedCollectorIds().has(user.id)" (change)="toggleCollector(user.id, $any($event.target).checked)" /> <span>{{ user.displayName }} <small>{{ user.username }}</small></span></label>
-        }
-      </fieldset>
-      <fieldset>
-        <legend>Cupos efectivos</legend>
-        <label>Clientes activos
-          <select formControlName="maxActiveCustomersMode"><option value="Inherited">Heredar de organización</option><option value="Overridden">Sobrescribir</option></select>
-        </label>
-        @if (form.controls.maxActiveCustomersMode.value === 'Overridden') { <label>Límite de clientes <input type="number" min="1" formControlName="maxActiveCustomersOverride" /></label> }
-        <label>Préstamos activos
-          <select formControlName="maxActiveLoansMode"><option value="Inherited">Heredar de organización</option><option value="Overridden">Sobrescribir</option></select>
-        </label>
-        @if (form.controls.maxActiveLoansMode.value === 'Overridden') { <label>Límite de préstamos <input type="number" min="1" formControlName="maxActiveLoansOverride" /></label> }
-      </fieldset>
-      <fieldset class="route-templates-fieldset">
-        <legend>Plantillas de crédito activas</legend>
-        <div class="templates-section-header">
-          <p class="templates-section-hint">Configura qué plantillas de crédito aplican a esta ruta.</p>
-          <div class="templates-actions">
-            <button type="button" class="btn-text" (click)="selectAllTemplates()" [disabled]="templates().length === 0">Todas</button>
-            <button type="button" class="btn-text" (click)="deselectAllTemplates()" [disabled]="selectedTemplateIds().size === 0">Ninguna</button>
-          </div>
-        </div>
-        @if (templates().length === 0) {
-          <p class="empty-templates-notice">Aún no hay plantillas creadas en esta organización.</p>
-        }
-        <div class="template-checkbox-list">
-          @for (template of templates(); track template.id) {
-            <label class="template-check-item" [class.selected]="selectedTemplateIds().has(template.id)">
-              <input type="checkbox" [checked]="selectedTemplateIds().has(template.id)" (change)="toggleTemplate(template.id, $any($event.target).checked)" />
-              <div class="template-info">
-                <div class="template-header-row">
-                  <span class="template-title">{{ template.name }}</span>
-                  <span class="template-badge" [class.badge-active]="template.status === 'Published'">{{ template.status === 'Published' ? 'Publicada' : template.status === 'Draft' ? 'Borrador' : 'Inactiva' }}</span>
-                </div>
-                <div class="template-specs">
-                  <span>{{ template.minPrincipalAmount | currency }} — {{ template.maxPrincipalAmount | currency }}</span>
-                  <span>·</span>
-                  <span>{{ template.minPercentage }}% – {{ template.maxPercentage }}%</span>
-                  <span>·</span>
-                  <span>{{ template.maxLoanDays }} días</span>
-                </div>
-              </div>
-            </label>
-          }
-        </div>
-      </fieldset>
-      <button type="submit" [disabled]="saving() || supervisors().length === 0 || collectors().length === 0">{{ saving() ? 'Guardando…' : editingRouteId() ? 'Guardar cambios' : 'Crear ruta' }}</button>
-    </form>
-  </app-editor-dialog>
-}
-<div class="workspace">
-  <section class="panel routes" aria-labelledby="route-list-title">
-    <div class="list-heading"><h3 id="route-list-title">Rutas configuradas</h3><span>{{ routes().length }}</span></div>
-    @if (loading()) { <p>Cargando rutas…</p> }
-    @else if (routes().length === 0) { <p class="empty">Aún no hay rutas en esta organización.</p> }
-    <p class="records-hint">Selecciona una tarjeta para abrir el dashboard de la ruta.</p>
-    <div class="record-grid">
-    @for (route of routes(); track route.id) {
-      <article class="editable-record record-card" role="button" tabindex="0" [attr.aria-label]="'Abrir dashboard de ' + route.name" (click)="openDashboard(route)" (keydown.enter)="openDashboard(route)" (keydown.space)="$event.preventDefault(); openDashboard(route)">
-        <div class="record-top"><span class="record-icon" aria-hidden="true">↗</span><span class="record-state" [class.muted]="route.status !== 'Active'">{{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}</span></div>
-        <h4 class="record-title">{{ route.name }}</h4>
-        <p class="record-description">{{ route.description || 'Sin descripción' }}</p>
-        <dl class="record-metrics">
-          <div><dt>Supervisor</dt><dd>{{ route.supervisor.displayName }}</dd></div>
-          <div><dt>Cobradores</dt><dd>{{ route.collectors.length }}</dd></div>
-          <div><dt>Saldo inicial</dt><dd>{{ route.initialBalance }}</dd></div>
-          <div><dt>Cupo clientes</dt><dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd></div>
-          <div><dt>Cupo préstamos</dt><dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd></div>
-          <div><dt>Plantillas</dt><dd>{{ getActiveTemplatesCount(route.id) }} activas</dd></div>
-        </dl>
-        <div class="record-footer">
-          <span class="record-team">{{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}@if (route.collectors.length > 1) { <span> +{{ route.collectors.length - 1 }}</span> }</span>
-          <button type="button" class="btn-card-edit" (click)="$event.stopPropagation(); edit(route)">Editar</button>
-        </div>
-      </article>
-    }
+<div class="admin-records routes-management-page">
+  <!-- Page Header -->
+  <header class="records-heading" aria-labelledby="routes-title">
+    <div class="heading-title-row">
+      <h2 id="routes-title">Rutas de cobro</h2>
+      <span class="records-total">{{ routes().length }} {{ routes().length === 1 ? 'ruta' : 'rutas' }}</span>
     </div>
-  </section>
-</div>
+    <button
+      type="button"
+      class="new-record"
+      (click)="openCreate()"
+      [disabled]="saving() || loading()"
+    >
+      <app-icon name="plus" /> Nueva ruta
+    </button>
+  </header>
 
+  <!-- Global Feedback Alerts -->
+  @if (error() && !editorOpen()) {
+    <p class="message error" role="alert">{{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="message success" role="status">{{ success() }}</p>
+  }
+
+  <!-- Master Section: Route Search & Selector -->
+  <section class="panel routes-master-panel" aria-labelledby="route-list-title">
+    <div class="routes-toolbar">
+      <div class="routes-search-box">
+        <span class="search-icon" aria-hidden="true"><app-icon name="search" /></span>
+        <input
+          type="search"
+          [value]="searchTerm()"
+          (input)="onSearchInput($any($event.target).value)"
+          placeholder="Buscar ruta por nombre, supervisor, cobrador o descripción…"
+          aria-label="Buscar rutas de cobro"
+        />
+        @if (searchTerm()) {
+          <button
+            type="button"
+            class="btn-clear-search"
+            (click)="clearSearch()"
+            title="Limpiar búsqueda"
+            aria-label="Limpiar búsqueda"
+          >
+            ✕
+          </button>
+        }
+      </div>
+
+      <div class="routes-status-filters" role="group" aria-label="Filtrar por estado">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="statusFilter() === 'ALL'"
+          (click)="setStatusFilter('ALL')"
+        >
+          Todas ({{ routes().length }})
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="statusFilter() === 'Active'"
+          (click)="setStatusFilter('Active')"
+        >
+          Activas ({{ activeRoutesCount() }})
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="statusFilter() === 'Inactive'"
+          (click)="setStatusFilter('Inactive')"
+        >
+          Inactivas ({{ inactiveRoutesCount() }})
+        </button>
+      </div>
+    </div>
+
+    <div class="list-heading">
+      <h3 id="route-list-title">Rutas configuradas</h3>
+      <span class="routes-count-badge">Mostrando {{ visibleRoutes().length }} de {{ filteredRoutes().length }}</span>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Cargando rutas y parámetros…</p>
+      </div>
+    } @else if (routes().length === 0) {
+      <div class="empty-state">
+        <app-icon name="route" />
+        <p>Aún no hay rutas creadas en esta organización.</p>
+        <button type="button" class="btn-create-first" (click)="openCreate()">+ Crear primera ruta</button>
+      </div>
+    } @else if (filteredRoutes().length === 0) {
+      <div class="empty-state">
+        <app-icon name="search" />
+        <p>No se encontraron rutas con el término "<strong>{{ searchTerm() }}</strong>".</p>
+        <button type="button" class="btn-text-action" (click)="clearSearch()">Limpiar filtro</button>
+      </div>
+    } @else {
+      <div class="record-grid">
+        @for (route of visibleRoutes(); track route.id) {
+          <article
+            class="editable-record record-card"
+            [class.is-selected]="selectedRouteId() === route.id && editorOpen()"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Seleccionar y configurar ruta ' + route.name"
+            (click)="selectRoute(route)"
+            (keydown.enter)="selectRoute(route)"
+            (keydown.space)="$event.preventDefault(); selectRoute(route)"
+          >
+            <div class="record-top">
+              <span class="record-icon" aria-hidden="true"><app-icon name="route" /></span>
+              <div class="record-top-tags">
+                @if (selectedRouteId() === route.id && editorOpen()) {
+                  <span class="record-selected-pill">Seleccionada</span>
+                }
+                <span class="record-state" [class.muted]="route.status !== 'Active'">
+                  {{ route.status === 'Active' ? 'Activa' : 'Inactiva' }}
+                </span>
+              </div>
+            </div>
+
+            <h4 class="record-title">{{ route.name }}</h4>
+            <p class="record-description">{{ route.description || 'Sin descripción' }}</p>
+
+            <dl class="record-metrics">
+              <div>
+                <dt>Supervisor</dt>
+                <dd>{{ route.supervisor.displayName }}</dd>
+              </div>
+              <div>
+                <dt>Cobradores</dt>
+                <dd>{{ route.collectors.length }}</dd>
+              </div>
+              <div>
+                <dt>Saldo inicial</dt>
+                <dd>{{ route.initialBalance | currency }}</dd>
+              </div>
+              <div>
+                <dt>Cupo clientes</dt>
+                <dd>{{ route.maxActiveCustomers.effectiveValue ?? 'Sin límite' }}</dd>
+              </div>
+              <div>
+                <dt>Cupo préstamos</dt>
+                <dd>{{ route.maxActiveLoans.effectiveValue ?? 'Sin límite' }}</dd>
+              </div>
+              <div>
+                <dt>Plantillas</dt>
+                <dd>{{ getActiveTemplatesCount(route.id) }} activas</dd>
+              </div>
+            </dl>
+
+            <div class="record-footer">
+              <span class="record-team">
+                {{ route.collectors.length ? route.collectors[0].displayName : 'Sin cobradores' }}
+                @if (route.collectors.length > 1) {
+                  <span class="team-extra"> +{{ route.collectors.length - 1 }}</span>
+                }
+              </span>
+              <div class="card-actions">
+                <button
+                  type="button"
+                  class="btn-card-edit"
+                  (click)="$event.stopPropagation(); selectRoute(route)"
+                >
+                  Configurar
+                </button>
+                <button
+                  type="button"
+                  class="btn-card-dash"
+                  (click)="$event.stopPropagation(); openDashboard(route)"
+                  title="Abrir Dashboard de balance y movimientos"
+                >
+                  ↗
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (hasMoreRoutes()) {
+        <div class="load-more-container">
+          <button
+            type="button"
+            class="btn-load-more"
+            (click)="loadMore()"
+          >
+            <app-icon name="plus" />
+            Ver más rutas ({{ remainingRoutesCount() }} restantes)
+          </button>
+        </div>
+      }
+    }
+  </section>
+
+  <!-- Detail Section: Route Information & Configuration (Large workspace in Web, Bottom Sheet Card in Mobile) -->
+  @if (editorOpen()) {
+    <div
+      class="route-editor-mobile-backdrop"
+      (click)="cancelEdit()"
+      aria-hidden="true"
+    ></div>
+    <section
+      id="route-configuration-panel"
+      class="route-detail-panel"
+      aria-labelledby="detail-panel-title"
+    >
+      <div class="mobile-sheet-handle" aria-hidden="true">
+        <span></span>
+      </div>
+      <div class="detail-panel-header">
+        <div class="header-titles">
+          <p class="detail-eyebrow">
+            {{ editingRouteId() ? 'INFORMACIÓN Y CONFIGURACIÓN' : 'NUEVA RUTA' }}
+          </p>
+          <h3 id="detail-panel-title">
+            {{ editingRouteId() ? (selectedRoute()?.name || 'Ruta seleccionada') : 'Crear nueva ruta de cobro' }}
+          </h3>
+          <p class="detail-subtitle">
+            {{ editingRouteId()
+              ? 'Consulta y actualiza los parámetros, asignación de equipo y cupos operativos de la ruta.'
+              : 'Configura el equipo, saldo inicial y parámetros heredados o personalizados para la nueva ruta.'
+            }}
+          </p>
+        </div>
+
+        <div class="header-actions">
+          @if (editingRouteId() && selectedRoute(); as curRoute) {
+            <button
+              type="button"
+              class="btn-dash-link"
+              (click)="openDashboard(curRoute)"
+              title="Abrir vista operativa de balance"
+            >
+              <app-icon name="analytics" /> Ver Dashboard / Balance
+            </button>
+          }
+          <button
+            type="button"
+            class="btn-close-detail"
+            (click)="cancelEdit()"
+            [disabled]="saving()"
+            title="Cerrar panel de configuración"
+          >
+            ✕ Cerrar
+          </button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <p class="message error" role="alert">{{ error() }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="route-config-form">
+        <!-- Section 1: Datos Generales -->
+        <fieldset class="form-section-card">
+          <legend class="section-legend">
+            <span class="legend-icon"><app-icon name="route" /></span>
+            1. Datos Generales de la Ruta
+          </legend>
+
+          <div class="form-grid-2">
+            <label class="form-field">
+              <span class="field-label">Nombre de la ruta <span class="required">*</span></span>
+              <input
+                formControlName="name"
+                maxlength="120"
+                autocomplete="off"
+                placeholder="Ej. Ruta Norte - Centro"
+              />
+            </label>
+
+            @if (editingRouteId()) {
+              <label class="form-field">
+                <span class="field-label">Estado operativo</span>
+                <select formControlName="status">
+                  <option value="Active">Activa</option>
+                  <option value="Inactive">Inactiva</option>
+                </select>
+              </label>
+            } @else {
+              <div class="form-field-info">
+                <span class="field-label">Estado inicial</span>
+                <p class="info-pill"><span class="status-dot"></span> Activa</p>
+              </div>
+            }
+          </div>
+
+          <label class="form-field">
+            <span class="field-label">Descripción o recorrido</span>
+            <textarea
+              formControlName="description"
+              maxlength="500"
+              rows="2"
+              placeholder="Zona geográfica, barrios o referencias principales del recorrido…"
+            ></textarea>
+          </label>
+
+          <div class="form-grid-2">
+            <label class="form-field">
+              <span class="field-label">Saldo inicial de caja <span class="required">*</span></span>
+              <div class="input-with-affix">
+                <span class="input-affix">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  formControlName="initialBalance"
+                  [readonly]="!!editingRouteId()"
+                  placeholder="0.00"
+                />
+              </div>
+              @if (editingRouteId()) {
+                <small class="field-hint">El saldo inicial queda fijado al crear la ruta y no puede ser modificado después.</small>
+              } @else {
+                <small class="field-hint">Monto en efectivo con el que iniciará la primera jornada de esta ruta.</small>
+              }
+            </label>
+
+            <div class="form-field">
+              <span class="field-label">Supervisor a cargo <span class="required">*</span></span>
+              <select formControlName="supervisorUserId">
+                <option value="">Selecciona un supervisor</option>
+                @for (user of supervisors(); track user.id) {
+                  <option [value]="user.id">{{ user.displayName }} ({{ user.username }})</option>
+                }
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 2: Equipo de Cobradores -->
+        <fieldset class="form-section-card">
+          <legend class="section-legend">
+            <span class="legend-icon"><app-icon name="users" /></span>
+            2. Cobradores Asignados
+            <span class="legend-badge">{{ selectedCollectorIds().size }} seleccionados</span>
+          </legend>
+
+          @if (collectors().length === 0) {
+            <p class="empty-notice">No hay cobradores activos registrados en el sistema.</p>
+          } @else {
+            <p class="field-hint">Selecciona los cobradores autorizados para operar esta ruta:</p>
+            <div class="collectors-grid">
+              @for (user of collectors(); track user.id) {
+                <label
+                  class="collector-card-item"
+                  [class.is-checked]="selectedCollectorIds().has(user.id)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="selectedCollectorIds().has(user.id)"
+                    (change)="toggleCollector(user.id, $any($event.target).checked)"
+                  />
+                  <div class="collector-avatar" aria-hidden="true">
+                    {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="collector-info">
+                    <strong class="collector-name">{{ user.displayName }}</strong>
+                    <span class="collector-username">{{ user.username }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <!-- Section 3: Parámetros Operativos y Cupos Heredables -->
+        <fieldset class="form-section-card">
+          <legend class="section-legend">
+            <span class="legend-icon"><app-icon name="lock" /></span>
+            3. Parámetros Operativos y Cupos Heredables
+          </legend>
+
+          <div class="inheritance-intro-banner">
+            <span class="banner-icon"><app-icon name="info" /></span>
+            <div>
+              <strong>Políticas y valores heredables de la organización</strong>
+              <p>
+                Los parámetros con la casilla <em>"Heredar de la organización"</em> adoptan automáticamente los valores globales.
+                Si deseas establecer un límite o zona horaria particular para esta ruta, desmarca la casilla para habilitar el campo y cambiar su valor.
+              </p>
+            </div>
+          </div>
+
+          <!-- Parameter 1: Zona Horaria -->
+          <div class="parameter-row">
+            <div class="param-header">
+              <span class="param-title">Zona Horaria de Operación</span>
+              <label class="inherit-check-pill" [class.is-inheriting]="inheritTimeZone()">
+                <input
+                  type="checkbox"
+                  [checked]="inheritTimeZone()"
+                  (change)="toggleInheritTimeZone($any($event.target).checked)"
+                />
+                <span>Heredar de la organización</span>
+              </label>
+            </div>
+
+            <div class="param-input-wrap" [class.is-locked]="inheritTimeZone()">
+              @if (inheritTimeZone()) {
+                <div class="locked-field-display">
+                  <input
+                    type="text"
+                    [readOnly]="true"
+                    [value]="orgTimeZoneDisplay() + ' (Heredado de la organización)'"
+                    class="input-locked"
+                  />
+                  <span class="lock-indicator" title="Parámetro heredado y bloqueado">
+                    <app-icon name="lock" /> Bloqueado (Heredado)
+                  </span>
+                </div>
+              } @else {
+                <div class="unlocked-field-display">
+                  <select formControlName="timeZoneId">
+                    <option value="">Selecciona zona horaria...</option>
+                    <option value="America/Bogota">Bogotá, Lima, Quito (UTC−5)</option>
+                    <option value="America/Mexico_City">Ciudad de México (UTC−6)</option>
+                    <option value="America/Sao_Paulo">São Paulo, Brasilia (UTC−3)</option>
+                    <option value="America/Santiago">Santiago de Chile (UTC−4/−3)</option>
+                    <option value="America/Argentina/Buenos_Aires">Buenos Aires (UTC−3)</option>
+                    <option value="America/Caracas">Caracas (UTC−4)</option>
+                    <option value="America/La_Paz">La Paz (UTC−4)</option>
+                    <option value="America/Guayaquil">Guayaquil (UTC−5)</option>
+                    <option value="America/Panama">Panamá (UTC−5)</option>
+                    <option value="America/Costa_Rica">Costa Rica (UTC−6)</option>
+                    <option value="America/Santo_Domingo">Santo Domingo (UTC−4)</option>
+                    <option value="UTC">UTC (Tiempo Universal Coordinado)</option>
+                  </select>
+                  <span class="custom-indicator">
+                    <app-icon name="check" /> Zona específica de ruta
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Parameter 2: Cupo Máximo de Clientes Activos -->
+          <div class="parameter-row">
+            <div class="param-header">
+              <span class="param-title">Máximo de Clientes Activos</span>
+              <label class="inherit-check-pill" [class.is-inheriting]="inheritCustomers()">
+                <input
+                  type="checkbox"
+                  [checked]="inheritCustomers()"
+                  (change)="toggleInheritCustomers($any($event.target).checked)"
+                />
+                <span>Heredar de la organización</span>
+              </label>
+            </div>
+
+            <div class="param-input-wrap" [class.is-locked]="inheritCustomers()">
+              @if (inheritCustomers()) {
+                <div class="locked-field-display">
+                  <input
+                    type="text"
+                    [readOnly]="true"
+                    [value]="effectiveCustomersDisplay()"
+                    class="input-locked"
+                  />
+                  <span class="lock-indicator" title="Parámetro heredado y bloqueado">
+                    <app-icon name="lock" /> Bloqueado (Actual heredado: {{ effectiveCustomersDisplay() }})
+                  </span>
+                </div>
+              } @else {
+                <div class="unlocked-field-display">
+                  <input
+                    type="number"
+                    min="1"
+                    [value]="form.controls.maxActiveCustomersOverride.value"
+                    (input)="onCustomersOverrideInput($any($event.target).value)"
+                    placeholder="Sin límite"
+                  />
+                  <span class="custom-indicator">
+                    <app-icon name="check" /> Límite propio de la ruta
+                  </span>
+                </div>
+              }
+            </div>
+            <small class="param-hint">
+              Número máximo de clientes con créditos vigentes que pueden asignarse a esta ruta simultáneamente.
+            </small>
+          </div>
+
+          <!-- Parameter 3: Cupo Máximo de Préstamos Activos -->
+          <div class="parameter-row">
+            <div class="param-header">
+              <span class="param-title">Máximo de Préstamos Activos</span>
+              <label class="inherit-check-pill" [class.is-inheriting]="inheritLoans()">
+                <input
+                  type="checkbox"
+                  [checked]="inheritLoans()"
+                  (change)="toggleInheritLoans($any($event.target).checked)"
+                />
+                <span>Heredar de la organización</span>
+              </label>
+            </div>
+
+            <div class="param-input-wrap" [class.is-locked]="inheritLoans()">
+              @if (inheritLoans()) {
+                <div class="locked-field-display">
+                  <input
+                    type="text"
+                    [readOnly]="true"
+                    [value]="effectiveLoansDisplay()"
+                    class="input-locked"
+                  />
+                  <span class="lock-indicator" title="Parámetro heredado y bloqueado">
+                    <app-icon name="lock" /> Bloqueado (Actual heredado: {{ effectiveLoansDisplay() }})
+                  </span>
+                </div>
+              } @else {
+                <div class="unlocked-field-display">
+                  <input
+                    type="number"
+                    min="1"
+                    [value]="form.controls.maxActiveLoansOverride.value"
+                    (input)="onLoansOverrideInput($any($event.target).value)"
+                    placeholder="Sin límite"
+                  />
+                  <span class="custom-indicator">
+                    <app-icon name="check" /> Límite propio de la ruta
+                  </span>
+                </div>
+              }
+            </div>
+            <small class="param-hint">
+              Número máximo de créditos en estado activo permitidos para colocación en esta ruta.
+            </small>
+          </div>
+        </fieldset>
+
+        <!-- Section 4: Plantillas de Crédito Habilitadas -->
+        <fieldset class="form-section-card">
+          <legend class="section-legend">
+            <span class="legend-icon"><app-icon name="clipboard" /></span>
+            4. Plantillas de Crédito Habilitadas
+            <span class="legend-badge">{{ selectedTemplateIds().size }} habilitadas</span>
+          </legend>
+
+          <div class="templates-section-header">
+            <p class="templates-section-hint">
+              Define cuáles de las plantillas de crédito de la organización pueden colocarse en esta ruta.
+            </p>
+            <div class="templates-actions">
+              <button
+                type="button"
+                class="btn-text-pill"
+                (click)="selectAllTemplates()"
+                [disabled]="templates().length === 0"
+              >
+                Seleccionar todas
+              </button>
+              <button
+                type="button"
+                class="btn-text-pill"
+                (click)="deselectAllTemplates()"
+                [disabled]="selectedTemplateIds().size === 0"
+              >
+                Deseleccionar todas
+              </button>
+            </div>
+          </div>
+
+          @if (templates().length === 0) {
+            <p class="empty-notice">Aún no hay plantillas de crédito creadas en esta organización.</p>
+          } @else {
+            <div class="template-checkbox-list">
+              @for (template of templates(); track template.id) {
+                <label
+                  class="template-check-item"
+                  [class.selected]="selectedTemplateIds().has(template.id)"
+                >
+                  <input
+                    type="checkbox"
+                    [checked]="selectedTemplateIds().has(template.id)"
+                    (change)="toggleTemplate(template.id, $any($event.target).checked)"
+                  />
+                  <div class="template-info">
+                    <div class="template-header-row">
+                      <strong class="template-title">{{ template.name }}</strong>
+                      <span
+                        class="template-badge"
+                        [class.badge-active]="template.status === 'Published'"
+                      >
+                        {{ template.status === 'Published' ? 'Publicada' : template.status === 'Draft' ? 'Borrador' : 'Inactiva' }}
+                      </span>
+                    </div>
+                    <div class="template-specs">
+                      <span>{{ template.minPrincipalAmount | currency }} — {{ template.maxPrincipalAmount | currency }}</span>
+                      <span class="dot-sep">·</span>
+                      <span>{{ template.minPercentage }}% – {{ template.maxPercentage }}%</span>
+                      <span class="dot-sep">·</span>
+                      <span>Hasta {{ template.maxLoanDays }} días</span>
+                    </div>
+                  </div>
+                </label>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <!-- Form Actions Bar -->
+        <div class="form-actions-bar">
+          <button
+            type="submit"
+            class="btn-submit-primary"
+            [disabled]="saving() || supervisors().length === 0 || collectors().length === 0"
+          >
+            @if (saving()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              Guardando cambios…
+            } @else {
+              <app-icon name="check" />
+              {{ editingRouteId() ? 'Guardar configuración de la ruta' : 'Crear ruta de cobro' }}
+            }
+          </button>
+
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="cancelEdit()"
+            [disabled]="saving()"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+  } @else {
+    <div class="no-route-selected-panel">
+      <div class="no-route-icon" aria-hidden="true">
+        <app-icon name="route" />
+      </div>
+      <h4>Configuración de ruta</h4>
+      <p>Selecciona cualquiera de las rutas en la cuadrícula superior para ver toda su información y configurar sus parámetros, o crea una nueva ruta.</p>
+      <button type="button" class="btn-primary-action" (click)="openCreate()">
+        <app-icon name="plus" /> Crear nueva ruta
+      </button>
+    </div>
+  }
 </div>

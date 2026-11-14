@@ -6,12 +6,13 @@
     </div>
 
     <form [formGroup]="filterForm" (ngSubmit)="loadAnalytics()" class="filters-row">
-      <select formControlName="routeId" (change)="loadAnalytics()" aria-label="Filtrar por ruta">
-        <option value="">Todas las rutas</option>
-        @for (route of routes(); track route.id) {
-          <option [value]="route.id">{{ route.name }}</option>
-        }
-      </select>
+      <app-route-selector
+        formControlName="routeId"
+        [routes]="routes()"
+        allLabel="Todas las rutas"
+        ariaLabel="Filtrar por ruta"
+        (valueChange)="onRouteChange($event)"
+      />
       <input type="date" formControlName="date" (change)="loadAnalytics()" aria-label="Fecha de corte" />
     </form>
   </div>

@@ -4,18 +4,22 @@
 *, *::before, *::after { box-sizing: border-box; }
 html {
   min-width: 20rem;
+  height: 100%;
   background: var(--color-background);
   touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
+  overflow: hidden;
 }
 body {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 100%;
   margin: 0;
   color: var(--color-text);
   background: var(--color-background);
   font-family: var(--font-family);
   touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
+  overflow: hidden;
 }
 button, a {
   font: inherit;
@@ -48,3 +52,15 @@ textarea {
 
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
 .modal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: .75rem; width: 100%; max-width: 28rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

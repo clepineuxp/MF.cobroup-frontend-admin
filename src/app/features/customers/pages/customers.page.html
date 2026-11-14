@@ -1,34 +1,314 @@
-<div class="admin-records">
-<section aria-labelledby="customers-title">
-  <header class="records-heading"><div><p class="records-eyebrow">CONTROL ADMINISTRATIVO</p><h2 id="customers-title">Clientes</h2><p class="records-description">Consulta tu cartera y administra las rutas y el estado de tus clientes.</p></div><span class="records-total">{{ totalCount() }} {{ totalCount() === 1 ? 'cliente' : 'clientes' }}</span></header>
-  @if (selected(); as customer) {
-    <form class="detail" (ngSubmit)="saveAssignment()"><div class="heading"><div><h3>{{ customer.firstNames }} {{ customer.lastNames }}</h3><span>{{ customer.businessOrWorkName }}</span></div><button type="button" class="quiet" (click)="close()">Cerrar</button></div>
-      <div class="fields"><label>Identificación<input name="editIdentification" [(ngModel)]="editIdentification" maxlength="64" required /></label><label>Ruta activa<select name="editRoute" [(ngModel)]="editRouteId" required>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label><label>Estado<select name="editStatus" [(ngModel)]="editStatus"><option value="Active">Activo</option><option value="Inactive">Inactivo</option></select></label></div>
-      <div class="contact"><div><strong>Teléfonos</strong>@for (phone of customer.phones; track phone.id) { <span>{{ phone.number }} {{ phone.isPrimary ? '· Principal' : '' }}</span> }</div><div><strong>Ubicaciones</strong>@for (location of customer.locations; track location.id) { <span>{{ location.alias || 'Sin alias' }} · {{ location.latitude }}, {{ location.longitude }} {{ location.isPrimary ? '· Principal' : '' }}</span> }</div></div>
-      @if (customer.observations) { <p>{{ customer.observations }}</p> }
-      <div class="actions"><button class="primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Guardar asignación' }}</button></div>
-    </form>
-  }
+<div class="admin-records customers-page-layout">
+  <!-- Sticky Header and Search Toolbar -->
+  <div class="customers-sticky-top">
+    <header class="records-heading">
+      <div class="heading-title-row">
+        <h2 id="customers-title">Clientes</h2>
+        <span class="records-total">{{ totalCount() }} {{ totalCount() === 1 ? 'cliente' : 'clientes' }}</span>
+      </div>
+    </header>
 
-  <form class="filters" (ngSubmit)="search()"><label>Ruta<select name="route" [(ngModel)]="filterRouteId"><option value="">Todas</option>@for (route of routes(); track route.id) { <option [value]="route.id">{{ route.name }}</option> }</select></label><label>Buscar<input name="search" [(ngModel)]="searchTerm" placeholder="Nombre, comercio o teléfono"></label><button class="primary" type="submit">Buscar</button></form>
-  @if (success()) { <p class="success" role="status">{{ success() }}</p> }
-  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-  @if (loading()) { <p>Cargando clientes…</p> }
-  @else if (customers().length === 0) { <p class="empty">No existen clientes para los filtros actuales.</p> }
-  @else {
-    <p class="records-hint">Mostrando {{ customers().length }} de {{ totalCount() }} clientes</p>
-    <div class="record-grid">
-      @for (customer of customers(); track customer.id) {
-        <article class="record-card customer-record">
-          <div class="record-top"><span class="record-avatar" aria-hidden="true">{{ customer.firstNames.charAt(0) }}{{ customer.lastNames.charAt(0) }}</span><span class="record-state" [class.muted]="customer.status !== 'Active'">{{ customer.status === 'Active' ? 'Activo' : 'Inactivo' }}</span></div>
-          <div><h3 class="record-title">{{ customer.firstNames }} {{ customer.lastNames }}</h3><p class="record-route">{{ routeName(customer.routeId) }}</p></div>
-          <p class="record-description">{{ customer.businessOrWorkName || 'Sin comercio o trabajo registrado' }}</p>
-          <dl class="record-contacts"><div><dt>Identificación</dt><dd>{{ customer.identification }}</dd></div><div><dt>Teléfono principal</dt><dd>{{ customer.primaryPhone || 'Sin teléfono' }}</dd></div><div><dt>Ubicación principal</dt><dd>@if (customer.primaryLatitude != null && customer.primaryLongitude != null) { {{ customer.primaryLatitude }}, {{ customer.primaryLongitude }} } @else { Sin ubicación }</dd></div></dl>
-          <button type="button" class="record-open" (click)="inspect(customer.id)"><span>Administrar cliente</span><span aria-hidden="true">↗</span></button>
-        </article>
+    <!-- Filters Toolbar -->
+    <form class="filters-toolbar" (ngSubmit)="search()">
+      <div class="filter-field route-filter">
+        <label for="route-filter-select">Ruta</label>
+        <div class="select-wrapper">
+          <app-route-selector
+            selectId="route-filter-select"
+            [routes]="routes()"
+            [(ngModel)]="filterRouteId"
+            name="route"
+            allLabel="Todas las rutas"
+            ariaLabel="Filtrar clientes por ruta"
+            (valueChange)="onFilterChange($event)"
+          />
+        </div>
+      </div>
+
+      <div class="filter-field search-filter">
+        <label for="search-input">Buscar cliente</label>
+        <div class="search-input-wrapper">
+          <span class="search-icon" aria-hidden="true"><app-icon name="search" /></span>
+          <input
+            id="search-input"
+            name="search"
+            [(ngModel)]="searchTerm"
+            placeholder="Nombre, comercio o teléfono"
+            autocomplete="off"
+          />
+          @if (searchTerm) {
+            <button
+              type="button"
+              class="btn-clear-search"
+              (click)="clearSearch()"
+              title="Borrar búsqueda"
+              aria-label="Borrar búsqueda"
+            >
+              ✕
+            </button>
+          }
+        </div>
+      </div>
+
+      <button class="btn-search-action" type="submit" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner-sm" aria-hidden="true"></span>
+        } @else {
+          <app-icon name="search" />
+        }
+        Buscar
+      </button>
+    </form>
+
+    <div class="records-meta-bar">
+      <span class="records-counter-tag">
+        Mostrando {{ visibleCustomers().length }} de {{ totalCount() }} clientes
+      </span>
+      @if (filterRouteId || searchTerm) {
+        <button type="button" class="btn-clear-filters" (click)="resetFilters()">
+          Limpiar filtros
+        </button>
       }
     </div>
-  }
-</section>
+  </div>
 
+  <!-- Messages -->
+  @if (success()) {
+    <p class="alert-msg success" role="status">
+      <app-icon name="check" /> {{ success() }}
+    </p>
+  }
+  @if (error() && !selected()) {
+    <p class="alert-msg error" role="alert">
+      <app-icon name="bolt" /> {{ error() }}
+    </p>
+  }
+
+  <!-- Cards Scroll Area -->
+  <div class="customers-scroll-area">
+    @if (loading() && customers().length === 0) {
+      <div class="loading-state">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>Cargando clientes…</p>
+      </div>
+    } @else if (customers().length === 0) {
+      <div class="empty-state">
+        <app-icon name="customer" />
+        <p>No existen clientes para los filtros actuales.</p>
+        @if (filterRouteId || searchTerm) {
+          <button type="button" class="btn-text-action" (click)="resetFilters()">
+            Restablecer búsqueda
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="record-grid">
+        @for (customer of visibleCustomers(); track customer.id) {
+          <article class="record-card customer-record">
+            <div class="record-top">
+              <span class="record-avatar" aria-hidden="true">
+                {{ customer.firstNames.charAt(0) }}{{ customer.lastNames.charAt(0) }}
+              </span>
+              <span class="record-state" [class.muted]="customer.status !== 'Active'">
+                {{ customer.status === 'Active' ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+
+            <div class="record-header-info">
+              <h3 class="record-title">{{ customer.firstNames }} {{ customer.lastNames }}</h3>
+              <p class="record-route">{{ routeName(customer.routeId) }}</p>
+            </div>
+
+            <p class="record-description">
+              {{ customer.businessOrWorkName || 'Sin comercio o trabajo registrado' }}
+            </p>
+
+            <dl class="record-contacts">
+              <div>
+                <dt>Identificación</dt>
+                <dd>{{ customer.identification }}</dd>
+              </div>
+              <div>
+                <dt>Teléfono principal</dt>
+                <dd>{{ customer.primaryPhone || 'Sin teléfono' }}</dd>
+              </div>
+              <div class="full-contact-row">
+                <dt>Ubicación</dt>
+                <dd>
+                  @if (customer.primaryLatitude != null && customer.primaryLongitude != null) {
+                    {{ customer.primaryLatitude }}, {{ customer.primaryLongitude }}
+                  } @else {
+                    Sin ubicación
+                  }
+                </dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              class="record-open"
+              (click)="inspect(customer.id)"
+            >
+              <span>Administrar cliente</span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          </article>
+        }
+      </div>
+
+      <!-- Ver más button -->
+      @if (hasMoreCards()) {
+        <div class="load-more-container">
+          <button
+            type="button"
+            class="btn-load-more"
+            (click)="loadMore()"
+            [disabled]="loadingMore()"
+          >
+            @if (loadingMore()) {
+              <span class="spinner-sm" aria-hidden="true"></span>
+              Cargando más clientes…
+            } @else {
+              <app-icon name="plus" />
+              Ver más clientes ({{ remainingCount() }} restantes)
+            }
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Modal Dialog for Administrar Cliente (No inline en la parte superior) -->
+  @if (selected(); as customer) {
+    <div class="customer-modal-overlay" (click)="close()" aria-hidden="true"></div>
+    <div
+      class="customer-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-customer-title"
+    >
+      <header class="modal-header">
+        <div>
+          <p class="modal-eyebrow">ADMINISTRACIÓN DE CLIENTE</p>
+          <h3 id="modal-customer-title">{{ customer.firstNames }} {{ customer.lastNames }}</h3>
+          <span class="modal-subtitle">{{ customer.businessOrWorkName || 'Sin alias o negocio' }}</span>
+        </div>
+        <button
+          type="button"
+          class="btn-modal-close"
+          (click)="close()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </header>
+
+      @if (error()) {
+        <p class="modal-alert-error" role="alert">{{ error() }}</p>
+      }
+
+      <form class="modal-form" (ngSubmit)="saveAssignment()">
+        <div class="modal-fields-grid">
+          <label class="modal-field">
+            <span class="field-title">Identificación <span class="required">*</span></span>
+            <input
+              name="editIdentification"
+              [(ngModel)]="editIdentification"
+              maxlength="64"
+              required
+              autocomplete="off"
+            />
+          </label>
+
+          <div class="modal-field">
+            <span class="field-title">Ruta activa <span class="required">*</span></span>
+            <app-route-selector
+              [routes]="routes()"
+              [(ngModel)]="editRouteId"
+              name="editRoute"
+              [includeAllOption]="false"
+              placeholder="Selecciona una ruta activa"
+              ariaLabel="Ruta activa del cliente"
+            />
+          </div>
+
+          <label class="modal-field full-span">
+            <span class="field-title">Estado del cliente</span>
+            <select name="editStatus" [(ngModel)]="editStatus">
+              <option value="Active">Activo</option>
+              <option value="Inactive">Inactivo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="modal-info-section">
+          <div class="info-block">
+            <strong>Teléfonos registrados</strong>
+            @if (customer.phones.length === 0) {
+              <span class="empty-field-note">Sin teléfonos registrados</span>
+            } @else {
+              <div class="tags-list">
+                @for (phone of customer.phones; track phone.id) {
+                  <span class="info-tag">
+                    {{ phone.number }}
+                    @if (phone.isPrimary) {
+                      <em class="primary-tag">Principal</em>
+                    }
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="info-block">
+            <strong>Ubicaciones registradas</strong>
+            @if (customer.locations.length === 0) {
+              <span class="empty-field-note">Sin ubicaciones registradas</span>
+            } @else {
+              <div class="tags-list">
+                @for (location of customer.locations; track location.id) {
+                  <span class="info-tag">
+                    {{ location.alias || 'Sin alias' }} · {{ location.latitude }}, {{ location.longitude }}
+                    @if (location.isPrimary) {
+                      <em class="primary-tag">Principal</em>
+                    }
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (customer.observations) {
+          <div class="modal-observations">
+            <strong>Observaciones</strong>
+            <p>{{ customer.observations }}</p>
+          </div>
+        }
+
+        <footer class="modal-actions-footer">
+          <button
+            class="btn-modal-save"
+            type="submit"
+            [disabled]="saving()"
+          >
+            @if (saving()) {
+              <span class="spinner-sm" aria-hidden="true"></span>
+              Guardando…
+            } @else {
+              Guardar asignación
+            }
+          </button>
+          <button
+            type="button"
+            class="btn-modal-cancel"
+            (click)="close()"
+            [disabled]="saving()"
+          >
+            Cerrar
+          </button>
+        </footer>
+      </form>
+    </div>
+  }
 </div>

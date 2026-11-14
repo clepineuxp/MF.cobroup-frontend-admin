@@ -28,6 +28,12 @@ export const routes: Routes = [
     title: 'Dashboard de ruta | COBROUP Administración',
   },
   {
+    path: 'balance',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/route-finances/pages/route-finance.page').then((module) => module.RouteFinancePage),
+    title: 'Balance de rutas, Ingresos y Gastos | COBROUP Administración',
+  },
+  {
     path: 'ingresos-inversiones',
     canActivate: [authGuard],
     data: { section: 'income-investments' },
@@ -75,7 +81,7 @@ export const routes: Routes = [
     path: 'medios-pago',
     canActivate: [authGuard],
     loadComponent: () => import('./features/payment-methods/pages/payment-methods.page').then((module) => module.PaymentMethodsPage),
-    title: 'Medios de Pago | COBROUP Administración',
+    title: 'Parámetros y Componentes | COBROUP Administración',
   },
   {
     path: 'mapa',
@@ -88,12 +94,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/analytics/pages/analytics.page').then((module) => module.AnalyticsPage),
     title: 'Analítica de Cartera | COBROUP Administración',
-  },
-  {
-    path: 'traza-movimientos',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/route-finances/pages/audit-trace.page').then((module) => module.AuditTracePage),
-    title: 'Traza de Movimientos | COBROUP Administración',
   },
   { path: 'login', loadComponent: () => import('./features/auth/pages/login.page').then((module) => module.LoginPage), title: 'Acceso administrativo | COBROUP' },
   { path: '**', redirectTo: '' },

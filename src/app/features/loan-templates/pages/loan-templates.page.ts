@@ -1,6 +1,6 @@
 import { EditorDialogComponent } from '../../../shared/ui/editor-dialog/editor-dialog.component';
 import { CurrencyPipe } from '@angular/common';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LoanTemplate, LoanTemplateClassification, LoanTemplateRequest, LoanTemplateStatus } from '../data/loan-template.models';
 import { RoutesService } from '../../routes/data/routes.service';
@@ -30,6 +30,17 @@ export class LoanTemplatesPage {
   private readonly templatesService = inject(LoanTemplatesService);
   private readonly routesService = inject(RoutesService);
   readonly routes = signal<readonly CollectionRoute[]>([]);
+  readonly routeSearchTerm = signal('');
+  readonly filteredRoutes = computed(() => {
+    const list = this.routes();
+    const q = this.routeSearchTerm().trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((route) => {
+      const nameMatch = route.name.toLowerCase().includes(q);
+      const supMatch = (this.getRouteSupervisor(route) ?? '').toLowerCase().includes(q);
+      return nameMatch || supMatch;
+    });
+  });
   readonly templates = signal<readonly LoanTemplate[]>([]);
   readonly editingId = signal<string | null>(null);
   readonly selected = signal<LoanTemplate | null>(null);
@@ -194,6 +205,7 @@ export class LoanTemplatesPage {
   private reset(): void {
     this.editVersion++; this.editorLoading.set(false); this.editorLoadFailed.set(false);
     this.editorOpen.set(false);
+    this.routeSearchTerm.set('');
     this.form.reset({ name: '', description: '', classification: 'Low', status: 'Draft', maxLoanDays: 30, maxPrincipalAmount: null, minPrincipalAmount: null, minPercentage: null, maxPercentage: null, routeIds: [] });
     this.editingId.set(null);
     this.selected.set(null);

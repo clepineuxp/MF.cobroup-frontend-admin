@@ -8,8 +8,8 @@ export class CustomersService {
   private readonly auth = inject(AuthService);
   private readonly config = inject(AUTH_CONFIG);
 
-  async search(routeId: string, search: string): Promise<CustomerPage> {
-    const query = new URLSearchParams({ page: '1', pageSize: '50' });
+  async search(routeId: string, search: string, page = 1, pageSize = 12): Promise<CustomerPage> {
+    const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (routeId) query.set('routeId', routeId);
     if (search.trim()) query.set('search', search.trim());
     const response = await this.auth.authorizedFetch(`${this.config.identityBaseUrl}/api/v1/customers?${query}`);

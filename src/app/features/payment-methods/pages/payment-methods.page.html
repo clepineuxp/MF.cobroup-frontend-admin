@@ -1,16 +1,46 @@
 <section class="payment-methods-page">
   <header class="page-header">
-    <div>
-      <span class="badge">Administración Financiera</span>
-      <h1>Medios de Pago Autorizados</h1>
-      <p class="subtitle">Gestiona y autoriza los medios de pago disponibles para los cobradores del tenant (AC-13).</p>
+    <div class="header-titles">
+      <div class="title-row">
+        <h1>Parámetros y Componentes Internos</h1>
+        <span class="count-pill">{{ activeTab() === 'payment-methods' ? items().length + ' medios' : reasons().length + ' motivos' }}</span>
+      </div>
     </div>
-    <button id="btn-create-payment-method" type="button" class="btn btn-primary" (click)="openCreate()">
-      + Nuevo Medio de Pago
-    </button>
+
+    <div class="header-actions">
+      @if (activeTab() === 'payment-methods') {
+        <button id="btn-create-payment-method" type="button" class="btn btn-primary" (click)="openCreate()">
+          + Nuevo Medio de Pago
+        </button>
+      } @else if (activeTab() === 'non-payment-reasons') {
+        <button id="btn-create-non-payment-reason" type="button" class="btn btn-primary" (click)="openCreateReason()">
+          + Nuevo Motivo de No Pago
+        </button>
+      }
+    </div>
   </header>
 
-  @if (error() && !showModal()) {
+  <!-- Tabs Bar extensible para parámetros -->
+  <div class="params-tabs-bar" role="tablist" aria-label="Categorías de parámetros configurables">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="param-tab-btn"
+        [class.active]="activeTab() === tab.id"
+        (click)="selectTab(tab.id)"
+        role="tab"
+        [attr.aria-selected]="activeTab() === tab.id"
+      >
+        <span class="tab-icon"><app-icon [name]="tab.icon" /></span>
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-badge">
+          {{ tab.id === 'payment-methods' ? items().length : reasons().length }}
+        </span>
+      </button>
+    }
+  </div>
+
+  @if (error() && !showModal() && !showReasonModal()) {
     <div class="alert error" role="alert">
       <span>{{ error() }}</span>
     </div>
@@ -22,82 +52,275 @@
     </div>
   }
 
-  <div class="card table-card">
-    @if (loading() && items().length === 0) {
-      <div class="state-message">Cargando medios de pago...</div>
-    } @else if (items().length === 0) {
-      <div class="empty-state">
-        <p>No se han registrado medios de pago autorizados en esta organización.</p>
-        <button type="button" class="btn btn-secondary" (click)="openCreate()">Crear el primer medio de pago</button>
+  <!-- TAB 1: MEDIOS DE PAGO -->
+  @if (activeTab() === 'payment-methods') {
+    <div class="card table-card">
+      <div class="section-toolbar">
+        <div class="section-meta">
+          <h2 class="section-title">Medios de Pago Autorizados</h2>
+          <p class="section-desc">Canales habilitados para registrar recaudos y abonos en ruta.</p>
+        </div>
       </div>
-    } @else {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="text-center">Orden</th>
-            <th>Nombre del Medio</th>
-            <th>Estado</th>
-            <th>Última Actualización</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track item.id) {
-            <tr class="editable-record" (click)="openEdit(item)">
-              <td class="text-center order-col">#{{ item.displayOrder }}</td>
-              <td class="name-col">
-                <button type="button" class="record-link" [disabled]="submitting()" [attr.aria-label]="'Editar medio de pago ' + item.name">{{ item.name }}</button>
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
-                  {{ item.isActive ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="meta-col">{{ item.updatedAtUtc | date:'mediumDate' }}</td>
-              <td class="text-right actions-col">
-                <button
-                  type="button"
-                  class="btn-action"
-                  [ngClass]="item.isActive ? 'btn-deactivate' : 'btn-activate'"
-                  [disabled]="submitting()" (click)="$event.stopPropagation(); toggleStatus(item)"
-                >
-                  {{ item.isActive ? 'Desactivar' : 'Activar' }}
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </div>
 
+      @if (loading() && items().length === 0) {
+        <div class="state-message">Cargando medios de pago...</div>
+      } @else if (items().length === 0) {
+        <div class="empty-state">
+          <p>No se han registrado medios de pago autorizados en esta organización.</p>
+          <button type="button" class="btn btn-secondary" (click)="openCreate()">Crear el primer medio de pago</button>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="text-center">Orden</th>
+                <th>Nombre del Medio</th>
+                <th>Estado</th>
+                <th>Última Actualización</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track $index) {
+                <tr class="editable-record" (click)="openEdit(item)">
+                  <td class="text-center order-col">#{{ item.displayOrder }}</td>
+                  <td class="name-col">
+                    <button
+                      type="button"
+                      class="record-link"
+                      [disabled]="submitting()"
+                      [attr.aria-label]="'Editar medio de pago ' + item.name"
+                    >
+                      {{ item.name }}
+                    </button>
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="item.isActive ? 'active' : 'inactive'">
+                      {{ item.isActive ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="meta-col">{{ item.updatedAtUtc | date:'mediumDate' }}</td>
+                  <td class="text-right actions-col">
+                    <button
+                      type="button"
+                      class="btn-action"
+                      [ngClass]="item.isActive ? 'btn-deactivate' : 'btn-activate'"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); toggleStatus(item)"
+                    >
+                      {{ item.isActive ? 'Desactivar' : 'Activar' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-edit"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); openEdit(item)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-delete"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); deleteItem(item)"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB 2: MOTIVOS DE NO PAGO -->
+  @if (activeTab() === 'non-payment-reasons') {
+    <div class="card table-card">
+      <div class="section-toolbar">
+        <div class="section-meta">
+          <h2 class="section-title">Motivos de No Pago</h2>
+          <p class="section-desc">Causales disponibles para que el cobrador reporte cuando un cliente no realiza el abono del día.</p>
+        </div>
+      </div>
+
+      @if (loadingReasons() && reasons().length === 0) {
+        <div class="state-message">Cargando motivos de no pago...</div>
+      } @else if (reasons().length === 0) {
+        <div class="empty-state">
+          <p>No se han configurado motivos de no pago en esta organización.</p>
+          <button type="button" class="btn btn-secondary" (click)="openCreateReason()">Crear el primer motivo</button>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="text-center">Orden</th>
+                <th>Motivo</th>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reason of reasons(); track reason.id) {
+                <tr class="editable-record" (click)="openEditReason(reason)">
+                  <td class="text-center order-col">#{{ reason.displayOrder }}</td>
+                  <td class="name-col">
+                    <button
+                      type="button"
+                      class="record-link"
+                      [disabled]="submitting()"
+                      [attr.aria-label]="'Editar motivo ' + reason.name"
+                    >
+                      {{ reason.name }}
+                    </button>
+                  </td>
+                  <td class="meta-col">{{ reason.description || 'Sin descripción' }}</td>
+                  <td>
+                    <span class="status-badge" [ngClass]="reason.isActive ? 'active' : 'inactive'">
+                      {{ reason.isActive ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="text-right actions-col">
+                    <button
+                      type="button"
+                      class="btn-action"
+                      [ngClass]="reason.isActive ? 'btn-deactivate' : 'btn-activate'"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); toggleReasonStatus(reason)"
+                    >
+                      {{ reason.isActive ? 'Desactivar' : 'Activar' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-edit"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); openEditReason(reason)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-delete"
+                      [disabled]="submitting()"
+                      (click)="$event.stopPropagation(); deleteReason(reason)"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- MODAL: MEDIO DE PAGO -->
   @if (showModal()) {
-    <app-editor-dialog [title]="editingItem() ? 'Editar medio de pago' : 'Nuevo medio de pago'" [busy]="submitting()" [error]="error()" (dismiss)="closeModal()">
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <div class="form-group">
-            <label for="methodName">Nombre del Medio de Pago *</label>
-            <input
-              id="methodName"
-              type="text"
-              formControlName="name"
-              placeholder="Ej: Efectivo, Nequi, Daviplata, Transferencia"
-            />
-            @if (form.controls.name.invalid && form.controls.name.touched) {
-              <span class="field-error">El nombre es obligatorio (máx 50 caracteres).</span>
-            }
-          </div>
+    <app-editor-dialog
+      [title]="editingItem() ? 'Editar medio de pago' : 'Nuevo medio de pago'"
+      [busy]="submitting()"
+      [error]="error()"
+      (dismiss)="closeModal()"
+    >
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="form-group">
+          <label for="methodName">Nombre del Medio de Pago *</label>
+          <input
+            id="methodName"
+            type="text"
+            formControlName="name"
+            placeholder="Ej: Efectivo, Nequi, Daviplata, Transferencia"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <span class="field-error">El nombre es obligatorio (máx 50 caracteres).</span>
+          }
+        </div>
 
-          <div class="form-group">
-            <label for="displayOrder">Orden de Visualización *</label>
-            <input id="displayOrder" type="number" formControlName="displayOrder" min="1" max="999" />
-          </div>
+        <div class="form-group">
+          <label for="displayOrder">Orden de Visualización *</label>
+          <input id="displayOrder" type="number" formControlName="displayOrder" min="1" max="999" />
+        </div>
 
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
-              {{ submitting() ? 'Guardando...' : 'Guardar Medio de Pago' }}
+        <div class="modal-footer">
+          @if (editingItem(); as current) {
+            <button
+              type="button"
+              class="btn btn-danger-outline"
+              [disabled]="submitting()"
+              (click)="deleteItem(current)"
+            >
+              Eliminar
             </button>
-          </div>
-        </form>
+          }
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
+            {{ submitting() ? 'Guardando...' : 'Guardar Medio de Pago' }}
+          </button>
+        </div>
+      </form>
+    </app-editor-dialog>
+  }
+
+  <!-- MODAL: MOTIVO DE NO PAGO -->
+  @if (showReasonModal()) {
+    <app-editor-dialog
+      [title]="editingReason() ? 'Editar motivo de no pago' : 'Nuevo motivo de no pago'"
+      [busy]="submitting()"
+      [error]="error()"
+      (dismiss)="closeReasonModal()"
+    >
+      <form [formGroup]="reasonForm" (ngSubmit)="saveReason()">
+        <div class="form-group">
+          <label for="reasonName">Nombre del Motivo *</label>
+          <input
+            id="reasonName"
+            type="text"
+            formControlName="name"
+            placeholder="Ej: Cliente ausente, Sin dinero hoy, Fecha reprogramada"
+          />
+          @if (reasonForm.controls.name.invalid && reasonForm.controls.name.touched) {
+            <span class="field-error">El nombre del motivo es obligatorio (máx 80 caracteres).</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="reasonDescription">Descripción (opcional)</label>
+          <input
+            id="reasonDescription"
+            type="text"
+            formControlName="description"
+            placeholder="Breve explicación de cuándo usar este motivo"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reasonDisplayOrder">Orden de Visualización *</label>
+          <input id="reasonDisplayOrder" type="number" formControlName="displayOrder" min="1" max="999" />
+        </div>
+
+        <div class="modal-footer">
+          @if (editingReason(); as currentReason) {
+            <button
+              type="button"
+              class="btn btn-danger-outline"
+              [disabled]="submitting()"
+              (click)="deleteReason(currentReason)"
+            >
+              Eliminar
+            </button>
+          }
+          <button type="submit" class="btn btn-primary" [disabled]="reasonForm.invalid || submitting()">
+            {{ submitting() ? 'Guardando...' : 'Guardar Motivo' }}
+          </button>
+        </div>
+      </form>
     </app-editor-dialog>
   }
 </section>
